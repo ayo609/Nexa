@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<title>Nexa Admin – Settings</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  :root{--bg:#0f0a1e;--card:#1a1333;--sidebar:#120c24;--primary:#7c3aed;--primary-dark:#6d28d9;--primary-soft:#2d1b69;--accent:#a78bfa;--text:#f5f3ff;--muted:#9d94b8;--border:#2d1f5e;--input-bg:#1e1644;--error:#ef4444;--success:#22c55e;--warn:#f59e0b;}
+  body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;}
+
+  .sidebar{width:250px;background:var(--sidebar);border-right:1px solid var(--border);padding:16px 12px;display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:20;overflow-y:auto;}
+  .sidebar .logo{display:flex;align-items:center;gap:10px;margin-bottom:24px;padding:8px;text-decoration:none;}
+  .logo-icon{width:40px;height:40px;border-radius:12px;background:var(--primary);display:flex;align-items:center;justify-content:center;}
+  .logo-icon svg{width:20px;height:20px;color:#fff;}
+  .sidebar .logo span{font-size:1.1rem;font-weight:800;color:var(--text);}
+  .sidebar .logo em{color:var(--accent);font-style:normal;}
+  .nav-section{font-size:0.62rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;padding:16px 12px 6px;}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:11px;color:var(--muted);text-decoration:none;font-size:0.84rem;font-weight:600;margin-bottom:2px;transition:all 0.2s;}
+  .nav-item:hover{background:var(--primary-soft);color:var(--text);}
+  .nav-item.active{background:var(--primary);color:#fff;box-shadow:0 4px 12px rgba(124,58,237,0.3);}
+  .nav-item svg{width:19px;height:19px;flex-shrink:0;}
+  .main-content{flex:1;margin-left:250px;padding:24px 28px;min-height:100vh;}
+  .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;}
+  .topbar h1{font-size:1.5rem;font-weight:800;}
+
+  .settings-grid{display:flex;flex-direction:column;gap:20px;}
+  .setting-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px 24px;}
+  .setting-card.danger{border-color:rgba(239,68,68,0.3);background:rgba(239,68,68,0.03);}
+  .setting-card.warning{border-color:rgba(245,158,11,0.3);background:rgba(245,158,11,0.03);}
+  .setting-card h3{font-size:1rem;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:8px;}
+  .setting-card h3 svg{width:20px;height:20px;color:var(--accent);}
+  .setting-card.danger h3 svg{color:var(--error);}
+  .setting-card.warning h3 svg{color:var(--warn);}
+  .setting-card p{font-size:0.82rem;color:var(--muted);line-height:1.6;margin-bottom:16px;}
+
+  .form-row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;}
+  .form-field{flex:1;min-width:200px;}
+  .form-field label{display:block;font-size:0.7rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;}
+  .form-field input,.form-field select{width:100%;height:48px;background:var(--input-bg);border:1px solid var(--border);border-radius:10px;padding:0 14px;font-family:inherit;font-size:0.9rem;color:var(--text);outline:none;}
+  .form-field input:focus,.form-field select:focus{border-color:var(--primary);}
+
+  .btn{font-size:0.8rem;font-weight:700;padding:10px 20px;border-radius:10px;border:none;cursor:pointer;font-family:inherit;transition:all 0.2s;display:inline-flex;align-items:center;gap:6px;}
+  .btn.primary{background:var(--primary);color:#fff;}
+  .btn.primary:hover{background:var(--primary-dark);}
+  .btn.success{background:var(--success);color:#fff;}
+  .btn.success:hover{background:#15803d;}
+  .btn.danger{background:var(--error);color:#fff;}
+  .btn.danger:hover{background:#b91c1c;}
+  .btn.warn{background:var(--warn);color:#000;}
+  .btn.warn:hover{background:#d97706;}
+  .btn.ghost{background:var(--input-bg);color:var(--muted);border:1px solid var(--border);}
+  .btn.ghost:hover{background:var(--border);}
+  .btn:disabled{opacity:0.5;cursor:not-allowed;}
+  .btn svg{width:16px;height:16px;}
+
+  .info-box{background:var(--input-bg);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-top:12px;display:flex;align-items:center;gap:10px;font-size:0.8rem;color:var(--muted);}
+  .info-box.success{background:rgba(34,197,94,0.08);border-color:rgba(34,197,94,0.3);color:var(--success);}
+  .info-box.error{background:rgba(239,68,68,0.08);border-color:rgba(239,68,68,0.3);color:var(--error);}
+  .info-box svg{width:18px;height:18px;flex-shrink:0;}
+
+  .confirm-input{background:var(--input-bg);border:2px solid var(--error);border-radius:10px;padding:12px 14px;margin-top:12px;}
+  .confirm-input label{display:block;font-size:0.75rem;font-weight:700;color:var(--error);margin-bottom:6px;}
+  .confirm-input input{width:100%;height:44px;background:transparent;border:none;color:var(--text);font-family:inherit;font-size:0.9rem;outline:none;}
+  .confirm-input input::placeholder{color:var(--muted);}
+
+  .loading{text-align:center;padding:40px;}
+  .spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 14px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  @media(max-width:900px){.sidebar{width:65px;padding:12px 6px;}.sidebar .logo span,.nav-item span,.nav-section{display:none;}.nav-item{justify-content:center;padding:12px 8px;}.main-content{margin-left:65px;padding:16px;}.form-row{flex-direction:column;}}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <a class="logo" href="admin-dashboard.html"><div class="logo-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div><span>Nex<em>a</em> Admin</span></a>
+  <div class="nav-section">Main</div>
+  <a href="admin-dashboard.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>Dashboard</a>
+  <div class="nav-section">Management</div>
+  <a href="admin-deposits.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="13" rx="2"/></svg>Deposits</a>
+  <a href="admin-withdrawals.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12V8H6a2 2 0 010-4h12v4"/></svg>Withdrawals</a>
+  <a href="admin-investments.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/></svg>Investments</a>
+  <a href="admin-referrals.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/></svg>Referrals</a>
+  <div class="nav-section">Users</div>
+  <a href="admin-users.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/></svg>All Users</a>
+  <div class="nav-section">System</div>
+  <a href="admin-settings.html" class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/></svg>Settings</a>
+  <a href="#" class="nav-item" style="color:var(--error);margin-top:auto;" onclick="adminLogout()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/></svg>Logout</a>
+</aside>
+
+<div class="main-content">
+  <div class="topbar"><h1>System Settings</h1></div>
+
+  <div class="settings-grid">
+
+    <!-- SYSTEM STATS -->
+    <div class="setting-card">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/></svg>System Overview</h3>
+      <p>Current platform statistics and database information.</p>
+      <div id="systemStats"><div class="loading"><div class="spinner"></div><p>Loading stats...</p></div></div>
+    </div>
+
+    <!-- UPDATE EXCHANGE RATE -->
+    <div class="setting-card">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>Exchange Rate Settings</h3>
+      <p>Update the USDT to Naira exchange rate used across the platform for deposits and withdrawals.</p>
+      <div class="form-row">
+        <div class="form-field"><label>Current Rate (₦ per $1)</label><input type="number" id="exchangeRate" value="1370" placeholder="1370" /></div>
+        <button class="btn primary" onclick="updateExchangeRate()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Update Rate</button>
+      </div>
+      <div class="info-box" id="rateInfo" style="display:none;"></div>
+    </div>
+
+    <!-- CLEAR PENDING DEPOSITS -->
+    <div class="setting-card warning">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>Clear Old Pending Deposits</h3>
+      <p>Reject all pending deposits older than a specified number of days. This helps clean up abandoned deposit requests.</p>
+      <div class="form-row">
+        <div class="form-field"><label>Older Than (Days)</label><input type="number" id="clearDays" value="7" min="1" /></div>
+        <button class="btn warn" onclick="clearOldPending('deposits')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/></svg>Clear Pending Deposits</button>
+      </div>
+    </div>
+
+    <!-- CLEAR PENDING WITHDRAWALS -->
+    <div class="setting-card warning">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>Clear Old Pending Withdrawals</h3>
+      <p>Reject and refund all pending withdrawals older than a specified number of days. Funds will be returned to user wallets.</p>
+      <div class="form-row">
+        <div class="form-field"><label>Older Than (Days)</label><input type="number" id="clearWithDays" value="7" min="1" /></div>
+        <button class="btn warn" onclick="clearOldPending('withdrawals')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/></svg>Clear & Refund Withdrawals</button>
+      </div>
+    </div>
+
+    <!-- FACTORY RESET -->
+    <div class="setting-card danger">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/></svg>⚠️ Factory Reset — Danger Zone</h3>
+      <p>This will permanently delete ALL data from the platform. This action CANNOT be undone. All users, deposits, withdrawals, investments, and referral data will be erased.</p>
+      
+      <div class="confirm-input">
+        <label>Type "DELETE EVERYTHING" to confirm:</label>
+        <input type="text" id="resetConfirm" placeholder="DELETE EVERYTHING" />
+      </div>
+      <button class="btn danger" id="resetBtn" onclick="factoryReset()" disabled style="margin-top:12px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/></svg>Factory Reset All Data
+      </button>
+    </div>
+
+    <!-- ADMIN LOGS -->
+    <div class="setting-card">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Admin Activity Logs</h3>
+      <p>Recent administrative actions performed on the platform.</p>
+      <div id="adminLogs"><div class="loading"><div class="spinner"></div><p>Loading logs...</p></div></div>
+    </div>
+
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { getFirestore, collection, query, orderBy, getDocs, doc, updateDoc, deleteDoc, serverTimestamp, increment, where, Timestamp, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = { apiKey: "AIzaSyA4nRl80lwklik6A8RTvE0Py-jNEg8PJ58", authDomain: "nexa-a8cad.firebaseapp.com", projectId: "nexa-a8cad", storageBucket: "nexa-a8cad.firebasestorage.app", messagingSenderId: "324559998149", appId: "1:324559998149:web:e23ddfa3f0c71114eab4ac" };
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  const fmtUSD = n => (n||0).toFixed(2);
+  const fmt = n => Math.round(n||0).toLocaleString();
+
+  window.adminLogout = async () => { sessionStorage.removeItem('nexa_admin_logged'); await signOut(auth); window.location.href = 'admin-login.html'; };
+
+  // ── CONFIRM INPUT ──
+  document.getElementById('resetConfirm').addEventListener('input', (e) => {
+    document.getElementById('resetBtn').disabled = e.target.value !== 'DELETE EVERYTHING';
+  });
+
+  // ── LOAD SYSTEM STATS ──
+  async function loadSystemStats() {
+    const [usersSnap, depSnap, withSnap, invSnap, refSnap] = await Promise.all([
+      getDocs(collection(db, 'users')),
+      getDocs(collection(db, 'deposits')),
+      getDocs(collection(db, 'withdrawals')),
+      getDocs(collection(db, 'investments')),
+      getDocs(collection(db, 'referralLogs'))
+    ]);
+
+    let totalBalance = 0, totalDeposited = 0, totalWithdrawn = 0, totalInvested = 0;
+    usersSnap.forEach(d => totalBalance += (d.data().walletBalance || 0));
+    depSnap.forEach(d => { if (d.data().status === 'approved') totalDeposited += (d.data().amount || 0); });
+    withSnap.forEach(d => { if (d.data().status === 'approved') totalWithdrawn += (d.data().amount || 0); });
+    invSnap.forEach(d => totalInvested += (d.data().amount || 0));
+
+    document.getElementById('systemStats').innerHTML = `
+      <div class="info-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+        <div><strong>Database Summary:</strong> ${usersSnap.size} Users · ${depSnap.size} Deposits · ${withSnap.size} Withdrawals · ${invSnap.size} Investments · ${refSnap.size} Referral Logs</div>
+      </div>
+      <div class="info-box" style="margin-top:8px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="13" rx="2"/></svg>
+        <div><strong>Financial Summary:</strong> Total Balance: $${fmtUSD(totalBalance)} · Deposits: $${fmtUSD(totalDeposited)} · Withdrawn: $${fmtUSD(totalWithdrawn)} · Invested: $${fmtUSD(totalInvested)}</div>
+      </div>`;
+  }
+
+  // ── UPDATE EXCHANGE RATE ──
+  window.updateExchangeRate = async () => {
+    const rate = parseInt(document.getElementById('exchangeRate').value);
+    if (!rate || rate < 100) { alert('Please enter a valid exchange rate (minimum 100).'); return; }
+    if (!confirm(`Update exchange rate to ₦${rate}/$1?`)) return;
+    try {
+      await updateDoc(doc(db, 'settings', 'exchangeRate'), { rate, updatedAt: serverTimestamp(), updatedBy: auth.currentUser?.email });
+      const info = document.getElementById('rateInfo');
+      info.className = 'info-box success'; info.style.display = 'flex';
+      info.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Exchange rate updated to ₦${rate}/$1 successfully.`;
+    } catch (err) { alert('Error: ' + err.message); }
+  };
+
+  // ── CLEAR OLD PENDING ──
+  window.clearOldPending = async (type) => {
+    const collectionName = type === 'deposits' ? 'deposits' : 'withdrawals';
+    const daysInput = type === 'deposits' ? 'clearDays' : 'clearWithDays';
+    const days = parseInt(document.getElementById(daysInput).value);
+    if (!days || days < 1) { alert('Please enter valid number of days.'); return; }
+    
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - days);
+    const cutoffTimestamp = Timestamp.fromDate(cutoff);
+
+    if (!confirm(`This will reject ALL pending ${type} older than ${days} days. ${type === 'withdrawals' ? 'Funds will be refunded to users.' : ''} Continue?`)) return;
+
+    try {
+      const snap = await getDocs(query(collection(db, collectionName), where('status', '==', 'pending')));
+      let count = 0;
+      
+      for (const d of snap.docs) {
+        const data = d.data();
+        const created = data.createdAt?.toMillis ? new Date(data.createdAt.toMillis()) : null;
+        if (created && created < cutoff) {
+          await updateDoc(doc(db, collectionName, d.id), { status: 'rejected', rejectedAt: serverTimestamp(), rejectedBy: 'system_cleanup' });
+          if (type === 'withdrawals' && data.userId && data.amount) {
+            await updateDoc(doc(db, 'users', data.userId), { walletBalance: increment(data.amount) });
+          }
+          count++;
+        }
+      }
+      alert(`✅ Cleaned up ${count} old pending ${type}.`);
+      loadSystemStats();
+    } catch (err) { alert('Error: ' + err.message); }
+  };
+
+  // ── FACTORY RESET ──
+  window.factoryReset = async () => {
+    const confirmText = document.getElementById('resetConfirm').value;
+    if (confirmText !== 'DELETE EVERYTHING') { alert('Please type DELETE EVERYTHING to confirm.'); return; }
+    if (!confirm('FINAL WARNING: This will permanently delete ALL platform data. This CANNOT be undone. Are you absolutely sure?')) return;
+    if (!confirm('LAST CHANCE: Type OK to proceed with full deletion.')) return;
+
+    const collections = ['users', 'deposits', 'withdrawals', 'investments', 'referralLogs', 'referralCodes', 'adminLogs'];
+    
+    try {
+      for (const col of collections) {
+        const snap = await getDocs(collection(db, col));
+        const batch = writeBatch(db);
+        let count = 0;
+        snap.forEach(d => { batch.delete(d.ref); count++; if (count >= 500) return; });
+        await batch.commit();
+        // If more than 500, continue deleting
+        if (snap.size > 500) {
+          const remaining = await getDocs(collection(db, col));
+          const batch2 = writeBatch(db);
+          remaining.forEach(d => batch2.delete(d.ref));
+          await batch2.commit();
+        }
+      }
+      alert('✅ Factory reset complete. All data has been deleted. You will be logged out.');
+      sessionStorage.clear();
+      window.location.href = 'admin-login.html';
+    } catch (err) { alert('Error during reset: ' + err.message); }
+  };
+
+  // ── ADMIN LOGS ──
+  async function loadAdminLogs() {
+    try {
+      const snap = await getDocs(query(collection(db, 'adminLogs'), orderBy('createdAt', 'desc'), where('createdAt', '!=', null)));
+      let html = '<table style="width:100%;border-collapse:collapse;"><tr><th style="padding:8px;text-align:left;">Admin</th><th style="padding:8px;text-align:left;">Action</th><th style="padding:8px;text-align:left;">Details</th><th style="padding:8px;text-align:left;">Date</th></tr>';
+      if (snap.empty) html += '<tr><td colspan="4" style="padding:20px;text-align:center;color:var(--muted);">No admin logs found</td></tr>';
+      snap.forEach(d => {
+        const log = d.data();
+        const date = log.createdAt?.toMillis ? new Date(log.createdAt.toMillis()).toLocaleString('en-US', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }) : '—';
+        html += `<tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:10px 8px;font-size:0.8rem;">${log.adminEmail||'—'}</td>
+          <td style="padding:10px 8px;font-size:0.8rem;">${log.action||'—'}</td>
+          <td style="padding:10px 8px;font-size:0.75rem;">User: ${(log.userId||'').substring(0,8)}... · $${fmtUSD(log.amount||0)} · ${log.reason||''}</td>
+          <td style="padding:10px 8px;font-size:0.75rem;">${date}</td>
+        </tr>`;
+      });
+      html += '</table>';
+      document.getElementById('adminLogs').innerHTML = html;
+    } catch {
+      document.getElementById('adminLogs').innerHTML = '<div class="info-box"><p>No logs available (collection may not exist yet).</p></div>';
+    }
+  }
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user || !sessionStorage.getItem('nexa_admin_logged')) { window.location.href = 'admin-login.html'; return; }
+    await loadSystemStats();
+    await loadAdminLogs();
+  });
+</script>
+</body>
+</html>
