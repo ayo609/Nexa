@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<title>Nexa – Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  :root{
+    --bg:#f4f3fa;
+    --card:#ffffff;
+    --primary:#5c3df4;
+    --primary-dark:#4528d4;
+    --primary-soft:#ede9ff;
+    --accent:#a78bfa;
+    --text:#1a1533;
+    --muted:#7b7694;
+    --border:#e3e0f5;
+    --input-bg:#f8f7ff;
+    --dark-card:linear-gradient(135deg,#1e1445 0%,#3b1fa8 100%);
+    --shadow:0 8px 32px -8px rgba(92,61,244,0.18);
+    --success:#16a34a;
+    --error:#dc2626;
+  }
+  body{
+    font-family:'DM Sans',system-ui,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    padding-bottom:84px;
+    min-height:100vh;
+  }
+
+  /* ── TOP BAR ── */
+  .topbar{
+    background:var(--card);
+    padding:14px 18px;
+    border-bottom:1px solid var(--border);
+    position:sticky;top:0;z-index:20;
+  }
+  .topbar-row{display:flex;align-items:center;justify-content:space-between;}
+  .topbar-left{display:flex;align-items:center;gap:10px;}
+  .avatar{
+    width:42px;height:42px;border-radius:50%;
+    background:var(--primary-soft);
+    display:flex;align-items:center;justify-content:center;
+    color:var(--primary);font-weight:700;font-size:1rem;flex-shrink:0;
+  }
+  .welcome-text h2{font-size:0.95rem;font-weight:700;color:var(--text);}
+  .welcome-text p{font-size:0.75rem;color:var(--muted);margin-top:1px;}
+  .topbar-icons{display:flex;align-items:center;gap:12px;}
+  .icon-btn{
+    width:38px;height:38px;border-radius:50%;
+    background:var(--input-bg);
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;border:1px solid var(--border);position:relative;
+  }
+  .icon-btn svg{width:18px;height:18px;color:var(--primary);}
+  .icon-dot{
+    position:absolute;top:6px;right:6px;width:7px;height:7px;
+    border-radius:50%;background:#ef4444;border:1.5px solid var(--card);
+  }
+  .meta-row{
+    display:flex;justify-content:space-between;align-items:center;
+    margin-top:10px;font-size:0.72rem;color:var(--muted);
+  }
+  .meta-row span{display:flex;align-items:center;gap:4px;}
+  .meta-row svg{width:12px;height:12px;}
+
+  main{padding:16px;display:flex;flex-direction:column;gap:18px;max-width:480px;margin:0 auto;}
+
+  /* ── BANNER (placeholder for nexa.jpg) ── */
+  .promo-banner{
+    width:100%;
+    aspect-ratio:16/7;
+    border-radius:18px;
+    background:var(--dark-card);
+    display:flex;align-items:center;justify-content:center;
+    overflow:hidden;position:relative;
+    border:1px solid rgba(167,139,250,0.25);
+  }
+  .promo-banner img{width:100%;height:100%;object-fit:cover;display:block;}
+  .promo-banner .placeholder-content{
+    text-align:center;color:#fff;padding:20px;
+  }
+  .promo-banner .placeholder-content svg{width:34px;height:34px;color:var(--accent);margin-bottom:8px;}
+  .promo-banner .placeholder-content p{font-size:0.8rem;color:rgba(255,255,255,0.65);}
+  .promo-banner .placeholder-content strong{display:block;font-size:0.95rem;margin-bottom:4px;}
+
+  /* ── INFO MODAL TRIGGER STRIP ── */
+  .info-strip{
+    display:flex;align-items:center;gap:10px;
+    background:var(--primary-soft);
+    border:1px solid #ddd6fe;
+    border-radius:14px;
+    padding:12px 14px;
+    cursor:pointer;
+  }
+  .info-strip svg{width:20px;height:20px;color:var(--primary);flex-shrink:0;}
+  .info-strip p{font-size:0.83rem;font-weight:600;color:var(--primary-dark);flex:1;}
+  .info-strip .chev{width:16px;height:16px;color:var(--primary);flex-shrink:0;}
+
+  /* ── BALANCE CARD ── */
+  .balance-card{
+    background:var(--dark-card);
+    border-radius:22px;
+    padding:22px 20px;
+    color:#fff;
+  }
+  .balance-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .balance-label{display:flex;align-items:center;gap:8px;font-size:0.9rem;color:rgba(255,255,255,0.75);}
+  .balance-label .pulse-dot{width:8px;height:8px;border-radius:50%;background:#22d3ee;flex-shrink:0;}
+  .history-btn{
+    display:flex;align-items:center;gap:6px;
+    background:rgba(255,255,255,0.1);
+    border:1px solid rgba(255,255,255,0.15);
+    border-radius:50px;padding:7px 14px;
+    font-size:0.78rem;font-weight:600;color:#fff;cursor:pointer;
+  }
+  .history-btn svg{width:14px;height:14px;}
+  .balance-amount{font-size:2.4rem;font-weight:800;letter-spacing:-1px;margin-bottom:18px;}
+  .balance-amount span{font-weight:700;}
+  .balance-actions{display:flex;gap:10px;}
+  .bal-btn{
+    flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;
+    padding:13px 6px;border-radius:14px;border:none;cursor:pointer;
+    font-family:inherit;font-size:0.82rem;font-weight:700;color:#fff;
+    text-decoration:none;
+  }
+  .bal-btn.deposit{background:var(--accent);color:#1e1445;}
+  .bal-btn.other{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);}
+  .bal-btn svg{width:20px;height:20px;}
+
+  /* ── QUICK ACTIONS ── */
+  .section-title{font-size:1.05rem;font-weight:700;color:var(--text);margin-bottom:2px;}
+  .quick-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+  .quick-item{
+    background:var(--card);border:1px solid var(--border);
+    border-radius:16px;padding:16px 6px 12px;
+    display:flex;flex-direction:column;align-items:center;gap:8px;
+    text-decoration:none;cursor:pointer;transition:transform .12s, box-shadow .12s;
+  }
+  .quick-item:active{transform:scale(0.95);}
+  .quick-icon{
+    width:46px;height:46px;border-radius:50%;
+    background:var(--primary-soft);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .quick-icon.gift{background:var(--primary);}
+  .quick-icon svg{width:21px;height:21px;color:var(--primary);}
+  .quick-icon.gift svg{color:#fff;}
+  .quick-item span{font-size:0.74rem;font-weight:600;color:var(--text);text-align:center;}
+
+  /* ── TELEGRAM → WHATSAPP STRIPS ── */
+  .social-row{display:flex;flex-direction:column;gap:10px;}
+  .social-btn{
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    background:#dcfce7;border:1px solid #bbf7d0;
+    border-radius:14px;padding:13px;
+    font-size:0.88rem;font-weight:700;color:#15803d;
+    text-decoration:none;cursor:pointer;
+  }
+  .social-btn svg{width:18px;height:18px;}
+  .social-btn.channel{background:var(--primary-soft);border-color:#ddd6fe;color:var(--primary-dark);}
+
+  /* ── TESTIMONIALS ── */
+  .testimonial-wrap{overflow:hidden;width:100%;position:relative;}
+  .testimonial-wrap::before,.testimonial-wrap::after{
+    content:'';position:absolute;top:0;bottom:0;width:30px;z-index:2;pointer-events:none;
+  }
+  .testimonial-wrap::before{left:0;background:linear-gradient(90deg,var(--bg),transparent);}
+  .testimonial-wrap::after{right:0;background:linear-gradient(270deg,var(--bg),transparent);}
+  .testimonial-track{
+    display:flex;gap:14px;width:max-content;
+    animation:scrollLeft 60s linear infinite;
+  }
+  .testimonial-track:hover{animation-play-state:paused;}
+  @keyframes scrollLeft{
+    from{transform:translateX(0);}
+    to{transform:translateX(-50%);}
+  }
+  .t-card{
+    width:230px;flex-shrink:0;
+    background:var(--card);border:1px solid var(--border);
+    border-radius:16px;padding:16px;
+  }
+  .t-head{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .t-avatar{
+    width:36px;height:36px;border-radius:50%;
+    background:var(--primary-soft);color:var(--primary);
+    display:flex;align-items:center;justify-content:center;
+    font-weight:700;font-size:0.85rem;flex-shrink:0;
+  }
+  .t-name{font-size:0.85rem;font-weight:700;color:var(--text);}
+  .t-stars{display:flex;gap:1px;margin-top:2px;}
+  .t-stars svg{width:11px;height:11px;color:#f59e0b;fill:#f59e0b;}
+  .t-text{font-size:0.78rem;color:var(--muted);line-height:1.5;}
+
+  /* ── BOTTOM NAV ── */
+  .bottom-nav{
+    position:fixed;bottom:0;left:0;right:0;
+    background:var(--card);border-top:1px solid var(--border);
+    display:flex;z-index:30;
+    padding:8px 4px calc(8px + env(safe-area-inset-bottom));
+  }
+  .nav-item{
+    flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;
+    text-decoration:none;color:var(--muted);padding:6px 0;cursor:pointer;
+  }
+  .nav-item svg{width:22px;height:22px;}
+  .nav-item span{font-size:0.7rem;font-weight:600;}
+  .nav-item.active{color:var(--primary);}
+  .nav-item.active .nav-icon-wrap{
+    background:var(--primary);border-radius:10px;width:38px;height:30px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .nav-item.active .nav-icon-wrap svg{color:#fff;width:18px;height:18px;}
+  .nav-icon-wrap{display:flex;align-items:center;justify-content:center;height:30px;}
+
+  /* ── MODALS ── */
+  .modal-overlay{
+    display:none;position:fixed;inset:0;
+    background:rgba(20,12,50,0.55);backdrop-filter:blur(4px);
+    z-index:100;align-items:center;justify-content:center;padding:20px;
+  }
+  .modal-overlay.show{display:flex;}
+  .modal{
+    background:var(--card);border-radius:22px;
+    padding:28px 22px 22px;max-width:360px;width:100%;
+    box-shadow:0 20px 60px rgba(92,61,244,0.25);
+    animation:modalIn .25s cubic-bezier(.34,1.56,.64,1);
+    max-height:85vh;overflow-y:auto;
+  }
+  @keyframes modalIn{from{opacity:0;transform:scale(.9) translateY(16px);}to{opacity:1;transform:scale(1) translateY(0);}}
+
+  /* simple alert modal */
+  .alert-modal{text-align:center;}
+  .modal-icon{width:60px;height:60px;border-radius:50%;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;}
+  .modal-icon.success{background:#dcfce7;}
+  .modal-icon.error{background:#fee2e2;}
+  .modal-icon.info{background:var(--primary-soft);}
+  .modal-icon svg{width:28px;height:28px;}
+  .alert-modal h3{font-size:1.1rem;font-weight:700;margin-bottom:8px;}
+  .alert-modal p{font-size:0.88rem;color:var(--muted);line-height:1.5;margin-bottom:20px;}
+  .modal-btn{width:100%;padding:13px;border:none;border-radius:12px;font-family:inherit;font-size:0.92rem;font-weight:700;cursor:pointer;background:var(--primary);color:#fff;}
+  .modal-btn:hover{background:var(--primary-dark);}
+
+  /* info modal (rules) */
+  .info-modal-header{display:flex;align-items:center;gap:12px;margin-bottom:18px;}
+  .info-modal-icon{width:46px;height:46px;border-radius:13px;background:var(--primary-soft);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .info-modal-icon svg{width:22px;height:22px;color:var(--primary);}
+  .info-modal-header h3{font-size:1.1rem;font-weight:700;color:var(--text);}
+  .info-modal-header p{font-size:0.78rem;color:var(--muted);}
+  .info-list{display:flex;flex-direction:column;gap:10px;margin-bottom:18px;}
+  .info-row{
+    display:flex;align-items:center;justify-content:space-between;
+    background:var(--input-bg);border:1px solid var(--border);
+    border-radius:12px;padding:11px 14px;
+  }
+  .info-row .label{display:flex;align-items:center;gap:9px;font-size:0.84rem;color:var(--muted);font-weight:500;}
+  .info-row .label svg{width:16px;height:16px;color:var(--primary);flex-shrink:0;}
+  .info-row .value{font-size:0.84rem;font-weight:700;color:var(--text);text-align:right;}
+  .wa-official-btn{
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    background:#16a34a;color:#fff;border-radius:13px;padding:14px;
+    font-size:0.92rem;font-weight:700;text-decoration:none;margin-bottom:10px;
+  }
+  .wa-official-btn svg{width:19px;height:19px;}
+  .close-info-btn{
+    width:100%;padding:13px;border-radius:12px;border:1.5px solid var(--border);
+    background:var(--input-bg);color:var(--muted);font-family:inherit;
+    font-size:0.9rem;font-weight:700;cursor:pointer;
+  }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-row">
+    <div class="topbar-left">
+      <div class="avatar" id="userInitial">N</div>
+      <div class="welcome-text">
+        <h2 id="welcomeName">Welcome back!</h2>
+        <p id="welcomeSub">Good to see you again</p>
+      </div>
+    </div>
+    <div class="topbar-icons">
+      <div class="icon-btn" onclick="openInfoModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      </div>
+      <a class="icon-btn" href="profile.html" style="text-decoration:none;color:inherit;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </a>
+    </div>
+  </div>
+  <div class="meta-row">
+    <span id="currentTime">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      --:--
+    </span>
+    <span id="lastLogin">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 109-9 9.75 9.75 0 00-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+      Last login: —
+    </span>
+  </div>
+</div>
+
+<main>
+
+  <!-- PROMO BANNER (placeholder for nexa.jpg) -->
+  <div class="promo-banner" id="promoBanner">
+    <div class="placeholder-content">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      <strong>nexa.jpg</strong>
+      <p>Drop your banner image here — replace #promoBanner content with an &lt;img src="nexa.jpg"&gt; tag.</p>
+    </div>
+  </div>
+
+  <!-- INFO STRIP -->
+  <div class="info-strip" onclick="openInfoModal()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+    <p>Withdrawal hours, charges & official group — tap to view</p>
+    <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+  </div>
+
+  <!-- BALANCE CARD -->
+  <div class="balance-card">
+    <div class="balance-top">
+      <div class="balance-label"><span class="pulse-dot"></span> Total Balance</div>
+      <button class="history-btn" onclick="location.href='investment.html'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Transaction history
+      </button>
+    </div>
+    <div class="balance-amount">₦<span id="walletBalance">0</span></div>
+    <div class="balance-actions">
+      <a href="deposit.html" class="bal-btn deposit">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        Deposit
+      </a>
+      <a href="withdrawal.html" class="bal-btn other">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 10h20"/></svg>
+        Withdraw
+      </a>
+      <a href="referral.html" class="bal-btn other">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Network
+      </a>
+    </div>
+  </div>
+
+  <!-- QUICK ACTIONS -->
+  <div>
+    <p class="section-title" style="margin-bottom:12px;">Quick actions</p>
+    <div class="quick-grid">
+      <a href="deposit.html" class="quick-item">
+        <div class="quick-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 10h20"/></svg></div>
+        <span>Deposit</span>
+      </a>
+      <a href="withdrawal.html" class="quick-item">
+        <div class="quick-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8H6a2 2 0 010-4h12v4"/><path d="M4 6v12c0 1.1.9 2 2 2h14v-4"/><path d="M18 12a2 2 0 000 4h4v-4z"/></svg></div>
+        <span>Withdraw</span>
+      </a>
+      <a href="referral.html" class="quick-item">
+        <div class="quick-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div>
+        <span>Team</span>
+      </a>
+      <a href="referral.html" class="quick-item">
+        <div class="quick-icon gift"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg></div>
+        <span>Gift</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- SOCIAL -->
+  <div class="social-row">
+    <a href="#" id="waGroupBtn" class="social-btn" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.6 6.32A8.86 8.86 0 0012.05 4a8.94 8.94 0 00-7.74 13.4L3 21l3.7-1.27a8.93 8.93 0 004.36 1.12h0a8.94 8.94 0 008.93-8.94 8.87 8.87 0 00-2.39-6.34zM12.05 19.5a7.4 7.4 0 01-3.8-1.04l-.27-.16-2.81.96.94-2.74-.18-.28a7.42 7.42 0 1113.78-3.85 7.43 7.43 0 01-7.66 7.11zm4.07-5.56c-.22-.11-1.31-.65-1.51-.72-.2-.07-.35-.11-.5.11-.15.22-.57.72-.7.87-.13.15-.26.16-.48.05-.22-.11-1.16-.43-2.21-1.36-.82-.73-1.37-1.63-1.53-1.9-.16-.27-.02-.42.11-.53.13-.11.29-.29.43-.43.14-.14.18-.24.28-.4.1-.16.05-.3-.02-.41-.07-.11-.6-1.45-.82-1.99-.22-.53-.45-.46-.62-.47-.16-.01-.35-.01-.54-.01s-.5.07-.69.34c-.19.27-.74.86-.74 1.93s.76 2.18.86 2.33c.1.15 1.43 2.19 3.5 3.07 2.06.88 2.06.59 2.43.55.37-.04 1.31-.53 1.49-1.04.18-.51.18-.95.13-1.04-.05-.09-.18-.14-.4-.25z"/></svg>
+      Join Official WhatsApp Group
+    </a>
+    <a href="#" id="waChannelBtn" class="social-btn channel" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.6 6.32A8.86 8.86 0 0012.05 4a8.94 8.94 0 00-7.74 13.4L3 21l3.7-1.27a8.93 8.93 0 004.36 1.12h0a8.94 8.94 0 008.93-8.94 8.87 8.87 0 00-2.39-6.34zM12.05 19.5a7.4 7.4 0 01-3.8-1.04l-.27-.16-2.81.96.94-2.74-.18-.28a7.42 7.42 0 1113.78-3.85 7.43 7.43 0 01-7.66 7.11z"/></svg>
+      Join WhatsApp Channel
+    </a>
+  </div>
+
+  <!-- TESTIMONIALS -->
+  <div>
+    <p class="section-title" style="margin-bottom:12px;">What our investors say</p>
+    <div class="testimonial-wrap">
+      <div class="testimonial-track" id="testimonialTrack"></div>
+    </div>
+  </div>
+
+</main>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <a href="dashboard.html" class="nav-item active">
+    <div class="nav-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+    <span>Home</span>
+  </a>
+  <a href="investment.html" class="nav-item">
+    <div class="nav-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg></div>
+    <span>Orders</span>
+  </a>
+  <a href="referral.html" class="nav-item">
+    <div class="nav-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div>
+    <span>Invite</span>
+  </a>
+  <a href="profile.html" class="nav-item">
+    <div class="nav-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+    <span>Account</span>
+  </a>
+</nav>
+
+<!-- ALERT MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal alert-modal">
+    <div class="modal-icon" id="modalIcon"></div>
+    <h3 id="modalTitle"></h3>
+    <p id="modalMsg"></p>
+    <button class="modal-btn" onclick="closeModal()">OK</button>
+  </div>
+</div>
+
+<!-- INFO MODAL (rules) -->
+<div class="modal-overlay" id="infoModal">
+  <div class="modal">
+    <div class="info-modal-header">
+      <div class="info-modal-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      </div>
+      <div>
+        <h3>Account Information</h3>
+        <p>Please read before depositing or withdrawing</p>
+      </div>
+    </div>
+
+    <div class="info-list">
+      <div class="info-row">
+        <span class="label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M8 8V6a4 4 0 018 0v2"/></svg>Welcome bonus</span>
+        <span class="value">₦500</span>
+      </div>
+      <div class="info-row">
+        <span class="label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 10h20"/></svg>Minimum withdrawal</span>
+        <span class="value">₦1,000</span>
+      </div>
+      <div class="info-row">
+        <span class="label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Withdrawal time</span>
+        <span class="value">8:00 AM – 5:00 PM</span>
+      </div>
+      <div class="info-row">
+        <span class="label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Withdrawal days</span>
+        <span class="value">Mon – Sat</span>
+      </div>
+      <div class="info-row">
+        <span class="label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>Withdrawal charge</span>
+        <span class="value">15%</span>
+      </div>
+      <div class="info-row">
+        <span class="label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/></svg>Gift code</span>
+        <span class="value">Available</span>
+      </div>
+    </div>
+
+    <a href="#" id="infoWaLink" class="wa-official-btn" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.6 6.32A8.86 8.86 0 0012.05 4a8.94 8.94 0 00-7.74 13.4L3 21l3.7-1.27a8.93 8.93 0 004.36 1.12h0a8.94 8.94 0 008.93-8.94 8.87 8.87 0 00-2.39-6.34zM12.05 19.5a7.4 7.4 0 01-3.8-1.04l-.27-.16-2.81.96.94-2.74-.18-.28a7.42 7.42 0 1113.78-3.85 7.43 7.43 0 01-7.66 7.11z"/></svg>
+      Official group is on WhatsApp only
+    </a>
+    <button class="close-info-btn" onclick="closeInfoModal()">Got it, close</button>
+  </div>
+</div>
+
+<!-- FIREBASE -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { getFirestore, doc, getDoc, updateDoc, serverTimestamp }
+    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyA4nRl80lwklik6A8RTvE0Py-jNEg8PJ58",
+    authDomain: "nexa-a8cad.firebaseapp.com",
+    projectId: "nexa-a8cad",
+    storageBucket: "nexa-a8cad.firebasestorage.app",
+    messagingSenderId: "324559998149",
+    appId: "1:324559998149:web:e23ddfa3f0c71114eab4ac"
+  };
+
+  const app  = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db   = getFirestore(app);
+
+  const ICONS = {
+    success: `<svg viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`,
+    error:   `<svg viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
+    info:    `<svg viewBox="0 0 24 24" fill="none" stroke="#5c3df4" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`
+  };
+
+  window.showModal = function(type, title, msg) {
+    document.getElementById('modalIcon').className = 'modal-icon ' + type;
+    document.getElementById('modalIcon').innerHTML = ICONS[type];
+    document.getElementById('modalTitle').textContent = title;
+    document.getElementById('modalMsg').textContent = msg;
+    document.getElementById('modalOverlay').classList.add('show');
+  };
+  window.closeModal = () => document.getElementById('modalOverlay').classList.remove('show');
+
+  // ── ONE-TIME DATA LOAD — no listeners, no repeated reads ──
+  // CACHE: sessionStorage holds the profile for this tab session so navigating
+  // between pages (deposit/withdraw/etc) and back doesn't re-fetch every time.
+  const CACHE_KEY = 'nexa_user_cache';
+  const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+  function getCache() {
+    try {
+      const raw = sessionStorage.getItem(CACHE_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (Date.now() - parsed.ts > CACHE_TTL) return null;
+      return parsed.data;
+    } catch { return null; }
+  }
+  function setCache(data) {
+    try { sessionStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data })); } catch {}
+  }
+
+  function formatTime(d) {
+    return d.toLocaleString('en-NG', { weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+  }
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) { window.location.href = 'login.html'; return; }
+
+    // Greeting + clock can render immediately, no Firestore needed
+    document.getElementById('currentTime').innerHTML =
+      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> ${formatTime(new Date())}`;
+
+    let data = getCache();
+
+    if (!data) {
+      try {
+        const snap = await getDoc(doc(db, 'users', user.uid)); // SINGLE READ
+        data = snap.exists() ? snap.data() : {};
+        setCache(data);
+      } catch (err) {
+        showModal('error', 'Connection issue', 'Could not load your dashboard data. Pull to refresh or check your connection.');
+        data = {};
+      }
+    }
+
+    const email = data.email || user.email || '';
+    const initial = email.charAt(0).toUpperCase() || 'N';
+    document.getElementById('userInitial').textContent = initial;
+    document.getElementById('welcomeName').textContent = `Welcome back, ${email.split('@')[0] || 'Investor'}!`;
+    document.getElementById('welcomeSub').textContent = 'Good to see you again';
+    document.getElementById('walletBalance').textContent = (data.walletBalance ?? 500).toLocaleString();
+
+    // Last login: show previous value, THEN update to now (single write, not on every load)
+    const prevLogin = data.lastLogin ? new Date(data.lastLogin.seconds ? data.lastLogin.seconds*1000 : data.lastLogin) : null;
+    document.getElementById('lastLogin').innerHTML =
+      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 109-9 9.75 9.75 0 00-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg> Last login: ${prevLogin ? formatTime(prevLogin) : 'First time'}`;
+
+    // Update lastLogin once per session only (avoid write-spam / quota burn)
+    if (!sessionStorage.getItem('nexa_login_logged')) {
+      try {
+        await updateDoc(doc(db, 'users', user.uid), { lastLogin: serverTimestamp() });
+        sessionStorage.setItem('nexa_login_logged', '1');
+      } catch {}
+    }
+  });
+
+  // WhatsApp links — replace these with your real invite links
+  document.getElementById('waGroupBtn').href   = 'https://chat.whatsapp.com/YOUR_GROUP_INVITE_CODE';
+  document.getElementById('waChannelBtn').href = 'https://whatsapp.com/channel/YOUR_CHANNEL_CODE';
+  document.getElementById('infoWaLink').href   = 'https://chat.whatsapp.com/YOUR_GROUP_INVITE_CODE';
+</script>
+
+<!-- INFO MODAL CONTROLS -->
+<script>
+  function openInfoModal()  { document.getElementById('infoModal').classList.add('show'); }
+  function closeInfoModal() { document.getElementById('infoModal').classList.remove('show'); }
+</script>
+
+<!-- TESTIMONIALS (static content — no Firestore reads, zero quota cost) -->
+<script>
+  const FIRST_NAMES = ["Chidinma","Ibrahim","Blessing","Tunde","Aisha","Emeka","Ngozi","Yusuf","Funke","Chukwu","Halima","Segun","Amaka","Bashir","Ifeoma","Damilola","Fatima","Obinna","Rasheedah","Kelechi","Tobi","Maryam","Uche","Adamu","Chioma","Femi","Hauwa","Nnamdi","Bukola","Sadiq","Esther","Olamide","Zainab","Chinedu","Temitope","Musa","Adaeze","Kunle","Ramatu","Stanley"];
+  const QUOTES = [
+    "Nexa paid my withdrawal within minutes — no stress at all.",
+    "I started with the smallest plan and my returns came in exactly on schedule.",
+    "Best investment platform I've used in Nigeria. Referral bonus is real too.",
+    "Customer support replied fast and sorted my issue same day.",
+    "Withdrawals land in my bank before 5pm every single time.",
+    "I've referred 12 people already because the platform just works.",
+    "The daily ROI actually drops daily, not 'eventually' like other apps.",
+    "Gift code saved me — got extra funds added instantly.",
+    "Clean dashboard, easy to use, no hidden charges I wasn't told about.",
+    "Six weeks in and every payout has been exactly as stated.",
+    "My team bonus from level 1 referrals alone covers my data subscription.",
+    "Nexa support team is patient, walked me through my first deposit.",
+    "I was skeptical at first but the first payout convinced me fully.",
+    "Withdrawal charge is clearly stated upfront, no surprises.",
+    "Switched from another platform and Nexa is far more reliable.",
+    "The WhatsApp group keeps us updated on every new plan.",
+    "Three months running and I haven't missed a single payout.",
+    "Simple to deposit, simple to withdraw, that's all I need.",
+    "My uplines vouched for Nexa and it's living up to the hype.",
+    "Got my welcome bonus immediately after signing up.",
+  ];
+
+  function initials(name){ return name.charAt(0); }
+
+  function starsSVG(count){
+    let s = '';
+    for(let i=0;i<5;i++){
+      s += `<svg viewBox="0 0 24 24"><polygon points="12 2 15 9 22 9 16.5 13.5 18.5 21 12 16.5 5.5 21 7.5 13.5 2 9 9 9"/></svg>`;
+    }
+    return s;
+  }
+
+  const track = document.getElementById('testimonialTrack');
+  let cards = '';
+  // Build 40 unique-ish testimonials by combining names + quotes
+  for (let i = 0; i < 40; i++) {
+    const name = FIRST_NAMES[i % FIRST_NAMES.length];
+    const quote = QUOTES[i % QUOTES.length];
+    cards += `
+      <div class="t-card">
+        <div class="t-head">
+          <div class="t-avatar">${initials(name)}</div>
+          <div>
+            <div class="t-name">${name}</div>
+            <div class="t-stars">${starsSVG(5)}</div>
+          </div>
+        </div>
+        <p class="t-text">${quote}</p>
+      </div>`;
+  }
+  // duplicate the set once so the marquee loop is seamless
+  track.innerHTML = cards + cards;
+</script>
+
+</body>
+</html>
