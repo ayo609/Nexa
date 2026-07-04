@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<title>Nexa – Profile</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  :root{
+    --bg:#f4f3fa; --card:#ffffff;
+    --primary:#5c3df4; --primary-dark:#4528d4; --primary-soft:#ede9ff;
+    --accent:#a78bfa; --text:#1a1533; --muted:#7b7694; --border:#e3e0f5;
+    --input-bg:#f8f7ff; --dark-card:linear-gradient(135deg,#1e1445 0%,#3b1fa8 100%);
+    --shadow:0 8px 32px -8px rgba(92,61,244,0.18);
+    --success:#16a34a; --error:#dc2626; --warn:#d97706;
+  }
+  body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);padding-bottom:84px;min-height:100vh;}
+
+  .topbar{background:var(--card);padding:16px 18px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;}
+  .back-btn{width:38px;height:38px;border-radius:50%;background:var(--input-bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;text-decoration:none;color:var(--text);flex-shrink:0;}
+  .back-btn svg{width:18px;height:18px;}
+  .topbar h1{font-size:1.05rem;font-weight:700;}
+  .topbar p{font-size:0.75rem;color:var(--muted);}
+
+  main{padding:16px;display:flex;flex-direction:column;gap:18px;max-width:480px;margin:0 auto;}
+
+  /* PROFILE HEADER */
+  .profile-header{background:var(--dark-card);border-radius:22px;padding:24px 20px;text-align:center;color:#fff;}
+  .profile-avatar{
+    width:72px;height:72px;border-radius:50%;
+    background:rgba(167,139,250,0.3);border:3px solid var(--accent);
+    display:flex;align-items:center;justify-content:center;
+    margin:0 auto 12px;font-size:1.8rem;font-weight:800;color:#fff;
+  }
+  .profile-header h2{font-size:1.2rem;font-weight:700;margin-bottom:2px;}
+  .profile-header .email{font-size:0.85rem;color:rgba(255,255,255,0.65);margin-bottom:4px;}
+  .profile-header .uid{font-size:0.72rem;color:rgba(255,255,255,0.4);font-family:monospace;}
+
+  /* STATS ROW */
+  .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+  .stat-card{
+    background:var(--card);border:1.5px solid var(--border);border-radius:16px;
+    padding:16px 10px;text-align:center;
+  }
+  .stat-card .stat-icon{
+    width:38px;height:38px;border-radius:12px;margin:0 auto 8px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .stat-card .stat-icon.purple{background:var(--primary-soft);}
+  .stat-card .stat-icon.green{background:#dcfce7;}
+  .stat-card .stat-icon.amber{background:#fef3c7;}
+  .stat-card .stat-icon svg{width:18px;height:18px;color:var(--primary);}
+  .stat-card .stat-icon.green svg{color:var(--success);}
+  .stat-card .stat-icon.amber svg{color:var(--warn);}
+  .stat-card .stat-value{font-size:1.1rem;font-weight:800;color:var(--text);margin-bottom:2px;}
+  .stat-card .stat-label{font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.3px;}
+
+  /* INFO CARD */
+  .info-card{background:var(--card);border:1.5px solid var(--border);border-radius:18px;padding:18px;}
+  .info-card h3{font-size:0.95rem;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+  .info-card h3 svg{width:18px;height:18px;color:var(--primary);}
+  .info-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);}
+  .info-row:last-child{border-bottom:none;}
+  .info-row .l{font-size:0.82rem;color:var(--muted);}
+  .info-row .v{font-size:0.85rem;font-weight:700;color:var(--text);text-align:right;word-break:break-all;}
+  .info-row .v.code{font-family:monospace;font-size:0.78rem;color:var(--primary);}
+  .copy-icon{
+    background:none;border:none;color:var(--primary);cursor:pointer;
+    display:flex;align-items:center;padding:4px;margin-left:6px;
+  }
+  .copy-icon svg{width:15px;height:15px;}
+
+  /* ACTION BUTTONS */
+  .action-btns{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+  .action-btn{
+    background:var(--card);border:1.5px solid var(--border);border-radius:16px;
+    padding:18px 14px;text-align:center;text-decoration:none;cursor:pointer;
+    transition:border-color 0.2s;display:flex;flex-direction:column;align-items:center;gap:8px;
+  }
+  .action-btn:hover{border-color:var(--primary);}
+  .action-btn svg{width:22px;height:22px;color:var(--primary);}
+  .action-btn span{font-size:0.8rem;font-weight:700;color:var(--text);}
+  .action-btn.logout{background:#fef2f2;border-color:#fecaca;}
+  .action-btn.logout svg{color:var(--error);}
+  .action-btn.logout span{color:var(--error);}
+
+  /* FAQ */
+  .faq-card{background:var(--card);border:1.5px solid var(--border);border-radius:18px;padding:18px;}
+  .faq-card h3{font-size:0.95rem;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+  .faq-card h3 svg{width:18px;height:18px;color:var(--primary);}
+  .faq-item{border-bottom:1px solid var(--border);}
+  .faq-item:last-child{border-bottom:none;}
+  .faq-question{
+    width:100%;background:none;border:none;padding:14px 0;
+    display:flex;align-items:center;justify-content:space-between;
+    cursor:pointer;font-family:inherit;font-size:0.87rem;font-weight:600;
+    color:var(--text);text-align:left;gap:12px;
+  }
+  .faq-question svg{width:16px;height:16px;color:var(--muted);flex-shrink:0;transition:transform 0.25s;}
+  .faq-item.open .faq-question svg{transform:rotate(180deg);color:var(--primary);}
+  .faq-answer{max-height:0;overflow:hidden;transition:max-height 0.3s ease, padding 0.3s ease;}
+  .faq-item.open .faq-answer{max-height:300px;padding-bottom:14px;}
+  .faq-answer p{font-size:0.82rem;color:var(--muted);line-height:1.6;}
+
+  /* BOTTOM NAV */
+  .bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--border);display:flex;z-index:30;padding:8px 4px calc(8px + env(safe-area-inset-bottom));}
+  .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;text-decoration:none;color:var(--muted);padding:6px 0;}
+  .nav-item svg{width:22px;height:22px;}
+  .nav-item span{font-size:0.7rem;font-weight:600;}
+  .nav-item.active{color:var(--primary);}
+  .nav-item.active .nav-icon-wrap{background:var(--primary);border-radius:10px;width:38px;height:30px;display:flex;align-items:center;justify-content:center;}
+  .nav-item.active .nav-icon-wrap svg{color:#fff;width:18px;height:18px;}
+  .nav-icon-wrap{display:flex;align-items:center;justify-content:center;height:30px;}
+
+  /* MODAL */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(20,12,50,0.55);backdrop-filter:blur(4px);z-index:100;align-items:center;justify-content:center;padding:20px;}
+  .modal-overlay.show{display:flex;}
+  .modal{background:var(--card);border-radius:22px;padding:28px 22px 22px;max-width:360px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(92,61,244,0.25);animation:modalIn .25s cubic-bezier(.34,1.56,.64,1);}
+  @keyframes modalIn{from{opacity:0;transform:scale(.9) translateY(16px);}to{opacity:1;transform:scale(1) translateY(0);}}
+  .modal-icon{width:60px;height:60px;border-radius:50%;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;}
+  .modal-icon.success{background:#dcfce7;} .modal-icon.error{background:#fee2e2;} .modal-icon.info{background:var(--primary-soft);}
+  .modal-icon svg{width:28px;height:28px;}
+  .modal h3{font-size:1.1rem;font-weight:700;margin-bottom:8px;}
+  .modal p{font-size:0.88rem;color:var(--muted);line-height:1.5;margin-bottom:20px;}
+  .modal-actions{display:flex;gap:10px;}
+  .modal-btn{flex:1;padding:13px;border:none;border-radius:12px;font-family:inherit;font-size:0.92rem;font-weight:700;cursor:pointer;transition:background 0.2s;}
+  .modal-btn.primary{background:var(--primary);color:#fff;}
+  .modal-btn.primary:hover{background:var(--primary-dark);}
+  .modal-btn.ghost{background:var(--input-bg);color:var(--muted);border:1.5px solid var(--border);}
+  .modal-btn.ghost:hover{background:var(--border);}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="dashboard.html" class="back-btn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+  </a>
+  <div>
+    <h1>My Profile</h1>
+    <p>Manage your account and view info</p>
+  </div>
+</div>
+
+<main>
+
+  <!-- PROFILE HEADER -->
+  <div class="profile-header">
+    <div class="profile-avatar" id="profileAvatar">N</div>
+    <h2 id="profileName">Loading...</h2>
+    <p class="email" id="profileEmail">—</p>
+    <p class="uid">UID: <span id="profileUid">—</span></p>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-icon purple">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M8 8V6a4 4 0 018 0v2"/></svg>
+      </div>
+      <div class="stat-value">₦<span id="statBalance">0</span></div>
+      <div class="stat-label">Balance</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon green">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+      </div>
+      <div class="stat-value">₦<span id="statEarnings">0</span></div>
+      <div class="stat-label">Earnings</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon amber">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+      </div>
+      <div class="stat-value" id="statReferrals">0</div>
+      <div class="stat-label">Referrals</div>
+    </div>
+  </div>
+
+  <!-- ACCOUNT INFO -->
+  <div class="info-card">
+    <h3>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      Account Details
+    </h3>
+    <div class="info-row">
+      <span class="l">Email</span>
+      <span class="v" id="infoEmail">—</span>
+    </div>
+    <div class="info-row">
+      <span class="l">Phone</span>
+      <span class="v" id="infoPhone">—</span>
+    </div>
+    <div class="info-row">
+      <span class="l">Joined</span>
+      <span class="v" id="infoJoined">—</span>
+    </div>
+    <div class="info-row">
+      <span class="l">Referral Code</span>
+      <span class="v code" id="infoReferralCode">—</span>
+      <button class="copy-icon" onclick="copyReferralCode()" title="Copy referral code">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+      </button>
+    </div>
+    <div class="info-row">
+      <span class="l">Status</span>
+      <span class="v" style="color:var(--success);" id="infoStatus">Active</span>
+    </div>
+  </div>
+
+  <!-- QUICK ACTIONS -->
+  <div class="action-btns">
+    <a href="deposit.html" class="action-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 10h20"/></svg>
+      <span>Deposit</span>
+    </a>
+    <a href="withdrawal.html" class="action-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12V8H6a2 2 0 010-4h12v4"/><path d="M4 6v12c0 1.1.9 2 2 2h14v-4"/><path d="M18 12a2 2 0 000 4h4v-4z"/></svg>
+      <span>Withdraw</span>
+    </a>
+    <a href="referral.html" class="action-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+      <span>Invite Friends</span>
+    </a>
+    <a href="investment.html" class="action-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+      <span>My Plans</span>
+    </a>
+  </div>
+
+  <button class="action-btn logout" onclick="confirmLogout()" style="width:100%;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    <span>Sign Out</span>
+  </button>
+
+  <!-- FAQ -->
+  <div class="faq-card">
+    <h3>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      Frequently Asked Questions
+    </h3>
+    
+    <div class="faq-item">
+      <button class="faq-question" onclick="toggleFAQ(this)">
+        How do I deposit funds?
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="faq-answer">
+        <p>Go to the Deposit page, select or enter your desired amount (minimum ₦3,000), proceed to payment, transfer the exact amount to the provided bank details, then upload your payment receipt. Your wallet will be credited after admin verification.</p>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-question" onclick="toggleFAQ(this)">
+        How do withdrawals work?
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="faq-answer">
+        <p>You can withdraw once per day between 8 AM – 5 PM (Mon–Sat). Minimum withdrawal is ₦1,000 with a 15% charge. You must have an active investment plan. Fill in your bank details on the Withdraw page and submit — your request will be reviewed by admin.</p>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-question" onclick="toggleFAQ(this)">
+        How does the referral program work?
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="faq-answer">
+        <p>Share your referral code with friends. When they sign up using your code, you earn ₦200. When they purchase an investment plan, you earn 20% on Level 1, 2% on Level 2, and 1% on Level 3. All bonuses are added to your wallet automatically.</p>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-question" onclick="toggleFAQ(this)">
+        How often are investment returns paid?
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="faq-answer">
+        <p>ROI is credited automatically every 24 hours for the duration of your plan (30 days). The countdown timer on your investment shows exactly when the next payout arrives. Funds go directly to your wallet balance.</p>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-question" onclick="toggleFAQ(this)">
+        What is the minimum investment?
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="faq-answer">
+        <p>The Starter Plan begins at ₦3,000 with a daily ROI of ₦500 for 30 days. There are 14 plans available up to ₦500,000. Choose a plan that fits your budget on the Investment page.</p>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-question" onclick="toggleFAQ(this)">
+        Is there a welcome bonus?
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="faq-answer">
+        <p>Yes! Every new user receives a ₦500 welcome bonus added to their wallet instantly upon registration. If you use a referral code during sign-up, you get an extra ₦500, making it ₦1,000 total.</p>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-question" onclick="toggleFAQ(this)">
+        How do I contact support?
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="faq-answer">
+        <p>Join our official WhatsApp group for instant support and updates. You can find the link on your Dashboard. Our support team is available during business hours to assist with any issues.</p>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <a href="dashboard.html" class="nav-item">
+    <div class="nav-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+    <span>Home</span>
+  </a>
+  <a href="investment.html" class="nav-item">
+    <div class="nav-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg></div>
+    <span>Orders</span>
+  </a>
+  <a href="referral.html" class="nav-item">
+    <div class="nav-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div>
+    <span>Invite</span>
+  </a>
+  <a href="profile.html" class="nav-item active">
+    <div class="nav-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+    <span>Account</span>
+  </a>
+</nav>
+
+<!-- LOGOUT MODAL -->
+<div class="modal-overlay" id="logoutModal">
+  <div class="modal">
+    <div class="modal-icon info">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#5c3df4" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    </div>
+    <h3>Sign Out?</h3>
+    <p>Are you sure you want to sign out of your account?</p>
+    <div class="modal-actions">
+      <button class="modal-btn ghost" onclick="closeLogoutModal()">Cancel</button>
+      <button class="modal-btn primary" onclick="logout()">Sign Out</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { getFirestore, doc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyA4nRl80lwklik6A8RTvE0Py-jNEg8PJ58",
+    authDomain: "nexa-a8cad.firebaseapp.com",
+    projectId: "nexa-a8cad",
+    storageBucket: "nexa-a8cad.firebasestorage.app",
+    messagingSenderId: "324559998149",
+    appId: "1:324559998149:web:e23ddfa3f0c71114eab4ac"
+  };
+
+  const app  = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db   = getFirestore(app);
+
+  const fmt = n => Math.round(n || 0).toLocaleString();
+
+  // ── FAQ TOGGLE ──
+  window.toggleFAQ = function(btn) {
+    const item = btn.parentElement;
+    item.classList.toggle('open');
+  };
+
+  // ── LOGOUT ──
+  window.confirmLogout = () => document.getElementById('logoutModal').classList.add('show');
+  window.closeLogoutModal = () => document.getElementById('logoutModal').classList.remove('show');
+  window.logout = async () => {
+    await signOut(auth);
+    sessionStorage.clear();
+    window.location.href = 'login.html';
+  };
+
+  // ── COPY REFERRAL CODE ──
+  window.copyReferralCode = () => {
+    const code = document.getElementById('infoReferralCode').textContent;
+    navigator.clipboard.writeText(code).then(() => {
+      const btn = document.querySelector('.copy-icon');
+      btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+      setTimeout(() => {
+        btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>`;
+      }, 1500);
+    });
+  };
+
+  // ── LOAD USER DATA ──
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) { window.location.href = 'login.html'; return; }
+
+    const snap = await getDoc(doc(db, 'users', user.uid));
+    const data = snap.exists() ? snap.data() : {};
+
+    const email = data.email || user.email || '';
+    const initial = email.charAt(0).toUpperCase() || 'N';
+    const nameFromEmail = email.split('@')[0] || 'Investor';
+
+    document.getElementById('profileAvatar').textContent = initial;
+    document.getElementById('profileName').textContent = nameFromEmail;
+    document.getElementById('profileEmail').textContent = email;
+    document.getElementById('profileUid').textContent = user.uid.substring(0, 12) + '...';
+
+    const walletBalance = data.walletBalance ?? 0;
+    const totalEarnings = data.totalEarnings ?? 0;
+    const referralCode = data.referralCode || user.uid.substring(0, 8).toUpperCase();
+    const phone = data.phone || '—';
+    const createdAt = data.createdAt?.toMillis 
+      ? new Date(data.createdAt.toMillis()).toLocaleDateString('en-NG', { day:'numeric', month:'short', year:'numeric' })
+      : '—';
+
+    document.getElementById('statBalance').textContent = fmt(walletBalance);
+    document.getElementById('statEarnings').textContent = fmt(totalEarnings);
+    document.getElementById('infoEmail').textContent = email;
+    document.getElementById('infoPhone').textContent = phone;
+    document.getElementById('infoJoined').textContent = createdAt;
+    document.getElementById('infoReferralCode').textContent = referralCode;
+
+    // Count referrals
+    const refSnap = await getDocs(query(collection(db, 'users'), where('referredBy', '==', user.uid)));
+    document.getElementById('statReferrals').textContent = refSnap.size;
+  });
+</script>
+
+</body>
+</html>
