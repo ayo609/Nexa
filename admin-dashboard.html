@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<title>Nexa – Admin Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  :root{
+    --bg:#0f0a1e; --card:#1a1333; --sidebar:#120c24;
+    --primary:#7c3aed; --primary-dark:#6d28d9; --primary-soft:#2d1b69;
+    --accent:#a78bfa; --text:#f5f3ff; --muted:#9d94b8; --border:#2d1f5e;
+    --input-bg:#1e1644; --error:#ef4444; --success:#22c55e; --warn:#f59e0b;
+  }
+  body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;}
+  
+  .sidebar{width:250px;background:var(--sidebar);border-right:1px solid var(--border);padding:16px 12px;display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:20;overflow-y:auto;}
+  .sidebar .logo{display:flex;align-items:center;gap:10px;margin-bottom:24px;padding:8px;text-decoration:none;}
+  .logo-icon{width:40px;height:40px;border-radius:12px;background:var(--primary);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .logo-icon svg{width:20px;height:20px;color:#fff;}
+  .sidebar .logo span{font-size:1.1rem;font-weight:800;color:var(--text);}
+  .sidebar .logo em{color:var(--accent);font-style:normal;}
+  .nav-section{font-size:0.62rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;padding:16px 12px 6px;}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:11px;color:var(--muted);text-decoration:none;font-size:0.84rem;font-weight:600;margin-bottom:2px;transition:all 0.2s;}
+  .nav-item:hover{background:var(--primary-soft);color:var(--text);}
+  .nav-item.active{background:var(--primary);color:#fff;box-shadow:0 4px 12px rgba(124,58,237,0.3);}
+  .nav-item svg{width:19px;height:19px;flex-shrink:0;}
+  .nav-item.logout{color:var(--error);margin-top:auto;}
+  .nav-item.logout:hover{background:rgba(239,68,68,0.15);}
+
+  .main-content{flex:1;margin-left:250px;padding:24px 28px;min-height:100vh;}
+  .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;}
+  .topbar h1{font-size:1.5rem;font-weight:800;}
+  .topbar .admin-info{display:flex;align-items:center;gap:10px;font-size:0.85rem;color:var(--muted);}
+  .admin-avatar{width:38px;height:38px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:0.9rem;}
+
+  .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px;}
+  .stat-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;transition:all 0.2s;}
+  .stat-card:hover{border-color:var(--primary);}
+  .stat-card .stat-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;}
+  .stat-card .stat-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;}
+  .stat-card .stat-icon.purple{background:rgba(124,58,237,0.2);}
+  .stat-card .stat-icon.green{background:rgba(34,197,94,0.2);}
+  .stat-card .stat-icon.amber{background:rgba(245,158,11,0.2);}
+  .stat-card .stat-icon.blue{background:rgba(59,130,246,0.2);}
+  .stat-card .stat-icon svg{width:20px;height:20px;color:var(--accent);}
+  .stat-card .stat-icon.green svg{color:var(--success);}
+  .stat-card .stat-icon.amber svg{color:var(--warn);}
+  .stat-card .stat-icon.blue svg{color:#60a5fa;}
+  .stat-card .stat-value{font-size:1.6rem;font-weight:800;line-height:1;}
+  .stat-card .stat-label{font-size:0.76rem;color:var(--muted);margin-top:4px;}
+
+  .quick-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:28px;}
+  .quick-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;text-align:center;text-decoration:none;color:var(--text);transition:all 0.2s;}
+  .quick-card:hover{border-color:var(--primary);transform:translateY(-2px);box-shadow:0 8px 24px rgba(124,58,237,0.15);}
+  .quick-card svg{width:28px;height:28px;color:var(--accent);margin-bottom:8px;}
+  .quick-card span{display:block;font-size:0.82rem;font-weight:700;}
+
+  @media(max-width:900px){
+    .sidebar{width:65px;padding:12px 6px;}
+    .sidebar .logo span,.nav-item span,.nav-section{display:none;}
+    .nav-item{justify-content:center;padding:12px 8px;}
+    .main-content{margin-left:65px;padding:16px;}
+    .stats-grid{grid-template-columns:repeat(2,1fr);}
+    .quick-grid{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <a class="logo" href="admin-dashboard.html"><div class="logo-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div><span>Nex<em>a</em> Admin</span></a>
+  
+  <div class="nav-section">Main</div>
+  <a href="admin-dashboard.html" class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>Dashboard</a>
+  
+  <div class="nav-section">Management</div>
+  <a href="admin-deposits.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M12 18V6"/><path d="M8 10l4-4 4 4"/></svg>Deposits</a>
+  <a href="admin-withdrawals.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12V8H6a2 2 0 010-4h12v4"/><path d="M4 6v12c0 1.1.9 2 2 2h14v-4"/></svg>Withdrawals</a>
+  <a href="admin-investments.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/></svg>Investments</a>
+  <a href="admin-referrals.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Referrals</a>
+  
+  <div class="nav-section">Users</div>
+  <a href="admin-users.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/></svg>All Users</a>
+  
+  <div class="nav-section">System</div>
+  <a href="admin-settings.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Settings</a>
+  
+  <a href="#" class="nav-item logout" onclick="adminLogout()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Logout</a>
+</aside>
+
+<div class="main-content">
+  <div class="topbar">
+    <h1>Admin Dashboard</h1>
+    <div class="admin-info"><div class="admin-avatar" id="adminAvatar">A</div><span id="adminEmail">admin@nexa.com</span></div>
+  </div>
+
+  <div class="stats-grid" id="statsGrid">
+    <div class="stat-card"><div class="stat-head"><div class="stat-icon purple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div></div><div class="stat-value" id="statUsers">—</div><div class="stat-label">Total Users</div></div>
+    <div class="stat-card"><div class="stat-head"><div class="stat-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="13" rx="2"/></svg></div></div><div class="stat-value" id="statBalance">—</div><div class="stat-label">Total Balance (USDT)</div></div>
+    <div class="stat-card"><div class="stat-head"><div class="stat-icon amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div></div><div class="stat-value" id="statPendingDep">—</div><div class="stat-label">Pending Deposits</div></div>
+    <div class="stat-card"><div class="stat-head"><div class="stat-icon blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12V8H6a2 2 0 010-4h12v4"/></svg></div></div><div class="stat-value" id="statPendingWith">—</div><div class="stat-label">Pending Withdrawals</div></div>
+  </div>
+
+  <div class="quick-grid">
+    <a href="admin-deposits.html" class="quick-card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M12 18V6"/></svg><span>Deposits</span></a>
+    <a href="admin-withdrawals.html" class="quick-card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12V8H6a2 2 0 010-4h12v4"/></svg><span>Withdrawals</span></a>
+    <a href="admin-users.html" class="quick-card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><span>Users</span></a>
+    <a href="admin-settings.html" class="quick-card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83"/></svg><span>Settings</span></a>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyA4nRl80lwklik6A8RTvE0Py-jNEg8PJ58", authDomain: "nexa-a8cad.firebaseapp.com", projectId: "nexa-a8cad",
+    storageBucket: "nexa-a8cad.firebasestorage.app", messagingSenderId: "324559998149", appId: "1:324559998149:web:e23ddfa3f0c71114eab4ac"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  const fmtUSD = n => (n || 0).toFixed(2);
+
+  window.adminLogout = async () => { sessionStorage.removeItem('nexa_admin_logged'); await signOut(auth); window.location.href = 'admin-login.html'; };
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user || !sessionStorage.getItem('nexa_admin_logged')) { window.location.href = 'admin-login.html'; return; }
+    document.getElementById('adminAvatar').textContent = (user.email || 'A').charAt(0).toUpperCase();
+    document.getElementById('adminEmail').textContent = user.email;
+
+    const [usersSnap, depositsSnap, withdrawalsSnap] = await Promise.all([
+      getDocs(collection(db, 'users')),
+      getDocs(collection(db, 'deposits')),
+      getDocs(collection(db, 'withdrawals'))
+    ]);
+
+    let totalBalance = 0, pendingDep = 0, pendingWith = 0;
+    usersSnap.forEach(d => totalBalance += (d.data().walletBalance || 0));
+    depositsSnap.forEach(d => { if (d.data().status === 'pending') pendingDep++; });
+    withdrawalsSnap.forEach(d => { if (d.data().status === 'pending') pendingWith++; });
+
+    document.getElementById('statUsers').textContent = usersSnap.size;
+    document.getElementById('statBalance').textContent = '$' + fmtUSD(totalBalance);
+    document.getElementById('statPendingDep').textContent = pendingDep;
+    document.getElementById('statPendingWith').textContent = pendingWith;
+  });
+</script>
+</body>
+</html>
