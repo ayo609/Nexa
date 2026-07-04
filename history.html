@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<title>Nexa – Transaction History</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  :root{
+    --bg:#f4f3fa; --card:#ffffff;
+    --primary:#5c3df4; --primary-dark:#4528d4; --primary-soft:#ede9ff;
+    --accent:#a78bfa; --text:#1a1533; --muted:#7b7694; --border:#e3e0f5;
+    --input-bg:#f8f7ff; --dark-card:linear-gradient(135deg,#1e1445 0%,#3b1fa8 100%);
+    --shadow:0 8px 32px -8px rgba(92,61,244,0.18);
+    --success:#16a34a; --error:#dc2626; --warn:#d97706;
+  }
+  body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:84px;}
+
+  .topbar{background:var(--card);padding:16px 18px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;}
+  .back-btn{width:38px;height:38px;border-radius:50%;background:var(--input-bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;text-decoration:none;color:var(--text);flex-shrink:0;}
+  .back-btn svg{width:18px;height:18px;}
+  .topbar h1{font-size:1.05rem;font-weight:700;}
+  .topbar p{font-size:0.75rem;color:var(--muted);}
+
+  main{padding:16px;max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:16px;}
+
+  /* FILTER TABS */
+  .filter-tabs{display:flex;background:var(--input-bg);border:1px solid var(--border);border-radius:14px;padding:4px;overflow-x:auto;}
+  .filter-tab{
+    flex:1;min-width:fit-content;text-align:center;padding:10px 14px;
+    font-size:0.8rem;font-weight:700;color:var(--muted);border-radius:11px;
+    cursor:pointer;transition:.15s;white-space:nowrap;border:none;
+    background:none;font-family:inherit;
+  }
+  .filter-tab.active{background:var(--primary);color:#fff;}
+
+  /* SUMMARY */
+  .summary-card{background:var(--dark-card);border-radius:18px;padding:18px;color:#fff;display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
+  .summary-item{text-align:center;}
+  .summary-item .l{font-size:0.72rem;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:0.3px;margin-bottom:4px;}
+  .summary-item .v{font-size:1.15rem;font-weight:800;}
+
+  /* TRANSACTION LIST */
+  .tx-list{display:flex;flex-direction:column;gap:10px;}
+  .tx-card{background:var(--card);border:1.5px solid var(--border);border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:14px;transition:border-color 0.2s;}
+  .tx-card:hover{border-color:var(--primary);}
+  .tx-icon{
+    width:44px;height:44px;border-radius:13px;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+  .tx-icon.deposit{background:#dcfce7;}
+  .tx-icon.withdrawal{background:#fee2e2;}
+  .tx-icon.investment{background:var(--primary-soft);}
+  .tx-icon.earning{background:#fef3c7;}
+  .tx-icon.referral{background:#ede9fe;}
+  .tx-icon.bonus{background:#d1fae5;}
+  .tx-icon svg{width:20px;height:20px;}
+  .tx-icon.deposit svg{color:var(--success);}
+  .tx-icon.withdrawal svg{color:var(--error);}
+  .tx-icon.investment svg{color:var(--primary);}
+  .tx-icon.earning svg{color:var(--warn);}
+  .tx-icon.referral svg{color:#7c3aed;}
+  .tx-icon.bonus svg{color:#059669;}
+
+  .tx-info{flex:1;min-width:0;}
+  .tx-info .tx-title{font-size:0.88rem;font-weight:700;color:var(--text);margin-bottom:2px;}
+  .tx-info .tx-meta{font-size:0.74rem;color:var(--muted);display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+  .tx-meta .dot{width:4px;height:4px;border-radius:50%;background:var(--border);flex-shrink:0;}
+
+  .tx-amount{text-align:right;flex-shrink:0;}
+  .tx-amount .amt{font-size:0.92rem;font-weight:800;}
+  .tx-amount .amt.credit{color:var(--success);}
+  .tx-amount .amt.debit{color:var(--error);}
+  .tx-amount .amt.neutral{color:var(--text);}
+  .tx-amount .status{
+    font-size:0.66rem;font-weight:700;padding:3px 8px;border-radius:50px;
+    display:inline-block;margin-top:2px;
+  }
+  .status-pending{background:#fef3c7;color:#92400e;}
+  .status-approved{background:#dcfce7;color:#15803d;}
+  .status-rejected{background:#fee2e2;color:#b91c1c;}
+  .status-completed{background:#dcfce7;color:#15803d;}
+  .status-active{background:#ede9fe;color:var(--primary-dark);}
+
+  /* LOADING & EMPTY */
+  .loading-state{text-align:center;padding:40px 20px;}
+  .loading-spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 12px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .loading-state p{font-size:0.85rem;color:var(--muted);}
+
+  .empty-state{text-align:center;padding:50px 20px;}
+  .empty-state svg{width:56px;height:56px;color:var(--border);margin-bottom:14px;}
+  .empty-state h3{font-size:1rem;font-weight:700;color:var(--text);margin-bottom:4px;}
+  .empty-state p{font-size:0.85rem;color:var(--muted);}
+
+  .load-more-btn{
+    width:100%;padding:13px;background:var(--input-bg);border:1.5px solid var(--border);
+    border-radius:13px;font-family:inherit;font-size:0.88rem;font-weight:700;
+    color:var(--primary);cursor:pointer;transition:background 0.2s;
+  }
+  .load-more-btn:hover{background:var(--primary-soft);}
+  .load-more-btn:disabled{opacity:0.5;cursor:not-allowed;}
+
+  /* BOTTOM NAV */
+  .bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--border);display:flex;z-index:30;padding:8px 4px calc(8px + env(safe-area-inset-bottom));}
+  .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;text-decoration:none;color:var(--muted);padding:6px 0;}
+  .nav-item svg{width:22px;height:22px;}
+  .nav-item span{font-size:0.7rem;font-weight:600;}
+  .nav-item.active{color:var(--primary);}
+  .nav-item.active .nav-icon-wrap{background:var(--primary);border-radius:10px;width:38px;height:30px;display:flex;align-items:center;justify-content:center;}
+  .nav-item.active .nav-icon-wrap svg{color:#fff;width:18px;height:18px;}
+  .nav-icon-wrap{display:flex;align-items:center;justify-content:center;height:30px;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="dashboard.html" class="back-btn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+  </a>
+  <div>
+    <h1>Transaction History</h1>
+    <p>All your account activities</p>
+  </div>
+</div>
+
+<main>
+
+  <!-- FILTER TABS -->
+  <div class="filter-tabs" id="filterTabs">
+    <button class="filter-tab active" data-filter="all" onclick="setFilter('all', this)">All</button>
+    <button class="filter-tab" data-filter="deposit" onclick="setFilter('deposit', this)">Deposits</button>
+    <button class="filter-tab" data-filter="withdrawal" onclick="setFilter('withdrawal', this)">Withdrawals</button>
+    <button class="filter-tab" data-filter="investment" onclick="setFilter('investment', this)">Investments</button>
+    <button class="filter-tab" data-filter="earning" onclick="setFilter('earning', this)">Earnings</button>
+    <button class="filter-tab" data-filter="referral" onclick="setFilter('referral', this)">Referrals</button>
+  </div>
+
+  <!-- SUMMARY -->
+  <div class="summary-card" id="summaryCard">
+    <div class="summary-item">
+      <div class="l">Total Deposits</div>
+      <div class="v">₦<span id="sumDeposits">0</span></div>
+    </div>
+    <div class="summary-item">
+      <div class="l">Total Withdrawals</div>
+      <div class="v">₦<span id="sumWithdrawals">0</span></div>
+    </div>
+    <div class="summary-item">
+      <div class="l">Total Earnings</div>
+      <div class="v">₦<span id="sumEarnings">0</span></div>
+    </div>
+    <div class="summary-item">
+      <div class="l">Transactions</div>
+      <div class="v" id="sumCount">0</div>
+    </div>
+  </div>
+
+  <!-- LOADING -->
+  <div class="loading-state" id="loadingState">
+    <div class="loading-spinner"></div>
+    <p>Loading transactions...</p>
+  </div>
+
+  <!-- EMPTY -->
+  <div class="empty-state" id="emptyState" style="display:none;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M8 8V6a4 4 0 018 0v2"/></svg>
+    <h3>No transactions yet</h3>
+    <p>Your transaction history will appear here</p>
+  </div>
+
+  <!-- TRANSACTION LIST -->
+  <div class="tx-list" id="txList"></div>
+
+  <button class="load-more-btn" id="loadMoreBtn" style="display:none;" onclick="loadMore()">Load More</button>
+
+</main>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <a href="dashboard.html" class="nav-item">
+    <div class="nav-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+    <span>Home</span>
+  </a>
+  <a href="investment.html" class="nav-item">
+    <div class="nav-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg></div>
+    <span>Orders</span>
+  </a>
+  <a href="referral.html" class="nav-item">
+    <div class="nav-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div>
+    <span>Invite</span>
+  </a>
+  <a href="profile.html" class="nav-item">
+    <div class="nav-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+    <span>Account</span>
+  </a>
+</nav>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import {
+    getFirestore, collection, query, where, getDocs,
+    orderBy, limit, startAfter, Timestamp
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyA4nRl80lwklik6A8RTvE0Py-jNEg8PJ58",
+    authDomain: "nexa-a8cad.firebaseapp.com",
+    projectId: "nexa-a8cad",
+    storageBucket: "nexa-a8cad.firebasestorage.app",
+    messagingSenderId: "324559998149",
+    appId: "1:324559998149:web:e23ddfa3f0c71114eab4ac"
+  };
+
+  const app  = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db   = getFirestore(app);
+
+  const PAGE_SIZE = 15;
+  const fmt = n => Math.round(n || 0).toLocaleString();
+
+  let currentUser = null;
+  let currentFilter = 'all';
+  let allTransactions = [];
+  let lastVisible = null;
+  let hasMore = true;
+  let isLoading = false;
+
+  // ════════════ TRANSACTION TYPE ICONS ════════════
+  const TX_ICONS = {
+    deposit: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M12 18V6"/><path d="M8 10l4-4 4 4"/></svg>`,
+    deposit_pending: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+    withdrawal: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M12 6v12"/><path d="M16 14l-4 4-4-4"/></svg>`,
+    withdrawal_pending: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+    investment: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>`,
+    earning: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>`,
+    referral: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>`,
+    bonus: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/></svg>`,
+    credit: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>`
+  };
+
+  function getTxIcon(type, status) {
+    if (type === 'deposit') {
+      return status === 'pending' ? 'deposit_pending' : 'deposit';
+    }
+    if (type === 'withdrawal') {
+      return status === 'pending' ? 'withdrawal_pending' : 'withdrawal';
+    }
+    return type;
+  }
+
+  function getTxIconClass(type) {
+    if (type === 'deposit') return 'deposit';
+    if (type === 'withdrawal') return 'withdrawal';
+    if (type === 'investment') return 'investment';
+    if (type === 'earning' || type === 'roi') return 'earning';
+    if (type === 'referral') return 'referral';
+    if (type === 'bonus') return 'bonus';
+    return 'deposit';
+  }
+
+  // ════════════ FORMAT DATE ════════════
+  function formatDateTime(timestamp) {
+    if (!timestamp) return '—';
+    let date;
+    if (timestamp.toMillis) {
+      date = new Date(timestamp.toMillis());
+    } else if (timestamp.seconds) {
+      date = new Date(timestamp.seconds * 1000);
+    } else if (timestamp instanceof Date) {
+      date = timestamp;
+    } else {
+      return '—';
+    }
+    return date.toLocaleDateString('en-NG', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  // ════════════ FETCH ALL TRANSACTIONS ════════════
+  async function fetchAllTransactions(userId) {
+    const transactions = [];
+
+    // Fetch deposits
+    try {
+      const depositSnap = await getDocs(
+        query(collection(db, 'deposits'), where('userId', '==', userId))
+      );
+      depositSnap.forEach(doc => {
+        const d = doc.data();
+        transactions.push({
+          id: doc.id,
+          type: 'deposit',
+          title: 'Deposit',
+          description: `Bank transfer deposit${d.payerName ? ' by ' + d.payerName : ''}`,
+          amount: d.amount || 0,
+          status: d.status || 'pending',
+          date: d.createdAt,
+          rawDate: d.createdAt
+        });
+      });
+    } catch (e) { console.log('Deposits fetch error:', e); }
+
+    // Fetch withdrawals
+    try {
+      const withdrawalSnap = await getDocs(
+        query(collection(db, 'withdrawals'), where('userId', '==', userId))
+      );
+      withdrawalSnap.forEach(doc => {
+        const w = doc.data();
+        transactions.push({
+          id: doc.id,
+          type: 'withdrawal',
+          title: 'Withdrawal',
+          description: `To ${w.bankName || 'Bank'}${w.accountNumber ? ' ••••' + w.accountNumber.slice(-4) : ''}`,
+          amount: w.amount || 0,
+          charge: w.charge || 0,
+          netAmount: w.netAmount || 0,
+          status: w.status || 'pending',
+          date: w.createdAt,
+          rawDate: w.createdAt
+        });
+      });
+    } catch (e) { console.log('Withdrawals fetch error:', e); }
+
+    // Fetch investments
+    try {
+      const invSnap = await getDocs(
+        query(collection(db, 'investments'), where('userId', '==', userId))
+      );
+      invSnap.forEach(doc => {
+        const inv = doc.data();
+        transactions.push({
+          id: doc.id,
+          type: 'investment',
+          title: `${inv.planName || 'Plan'} Activated`,
+          description: `Invested ₦${fmt(inv.amount || 0)} · Earns ₦${fmt(inv.daily || 0)}/day`,
+          amount: inv.amount || 0,
+          status: inv.status || 'active',
+          date: inv.createdAt,
+          rawDate: inv.createdAt
+        });
+
+        // Add ROI earnings as separate transactions
+        if (inv.totalPaidOut > 0) {
+          transactions.push({
+            id: doc.id + '_roi',
+            type: 'earning',
+            title: `${inv.planName || 'Plan'} ROI`,
+            description: `Daily earnings from ${inv.planName || 'investment'} plan`,
+            amount: inv.totalPaidOut || 0,
+            status: 'completed',
+            date: inv.createdAt,
+            rawDate: inv.createdAt
+          });
+        }
+      });
+    } catch (e) { console.log('Investments fetch error:', e); }
+
+    // Fetch referral logs
+    try {
+      const refSnap = await getDocs(
+        query(collection(db, 'referralLogs'), where('fromUserId', '==', userId))
+      );
+      refSnap.forEach(doc => {
+        const r = doc.data();
+        transactions.push({
+          id: doc.id,
+          type: 'referral',
+          title: 'Referral Bonus',
+          description: `Level ${r.level || 1} referral reward`,
+          amount: r.bonus || 0,
+          status: 'completed',
+          date: r.createdAt,
+          rawDate: r.createdAt
+        });
+      });
+    } catch (e) { console.log('Referral logs fetch error:', e); }
+
+    // Sort by date (newest first)
+    transactions.sort((a, b) => {
+      const dateA = a.rawDate?.toMillis ? a.rawDate.toMillis() : 
+                    a.rawDate?.seconds ? a.rawDate.seconds * 1000 : 0;
+      const dateB = b.rawDate?.toMillis ? b.rawDate.toMillis() : 
+                    b.rawDate?.seconds ? b.rawDate.seconds * 1000 : 0;
+      return dateB - dateA;
+    });
+
+    return transactions;
+  }
+
+  // ════════════ FILTER TRANSACTIONS ════════════
+  function filterTransactions(transactions, filter) {
+    if (filter === 'all') return transactions;
+    if (filter === 'earning') return transactions.filter(t => t.type === 'earning' || t.type === 'roi');
+    return transactions.filter(t => t.type === filter);
+  }
+
+  // ════════════ UPDATE SUMMARY ════════════
+  function updateSummary(filteredTx) {
+    let totalDeposits = 0, totalWithdrawals = 0, totalEarnings = 0;
+
+    filteredTx.forEach(tx => {
+      if (tx.type === 'deposit' && tx.status === 'approved') totalDeposits += tx.amount;
+      if (tx.type === 'withdrawal') totalWithdrawals += tx.amount;
+      if (tx.type === 'earning' || tx.type === 'roi' || tx.type === 'referral' || tx.type === 'bonus') {
+        totalEarnings += tx.amount;
+      }
+    });
+
+    document.getElementById('sumDeposits').textContent = fmt(totalDeposits);
+    document.getElementById('sumWithdrawals').textContent = fmt(totalWithdrawals);
+    document.getElementById('sumEarnings').textContent = fmt(totalEarnings);
+    document.getElementById('sumCount').textContent = filteredTx.length;
+  }
+
+  // ════════════ RENDER TRANSACTIONS ════════════
+  function renderTransactions(transactions, append = false) {
+    const txList = document.getElementById('txList');
+    const emptyState = document.getElementById('emptyState');
+    const loadMoreBtn = document.getElementById('loadMoreBtn');
+
+    if (!append) {
+      txList.innerHTML = '';
+    }
+
+    if (transactions.length === 0 && !append) {
+      emptyState.style.display = 'block';
+      loadMoreBtn.style.display = 'none';
+      return;
+    }
+
+    emptyState.style.display = 'none';
+
+    const displayTx = append ? transactions : transactions.slice(0, PAGE_SIZE);
+    
+    displayTx.forEach(tx => {
+      const iconType = getTxIcon(tx.type, tx.status);
+      const iconClass = getTxIconClass(tx.type);
+      const iconSvg = TX_ICONS[iconType] || TX_ICONS.credit;
+
+      let amountClass = 'debit';
+      let amountPrefix = '-₦';
+      let displayAmount = tx.amount;
+
+      if (tx.type === 'deposit') {
+        amountClass = tx.status === 'approved' ? 'credit' : 'neutral';
+        amountPrefix = tx.status === 'approved' ? '+₦' : '₦';
+      } else if (tx.type === 'withdrawal') {
+        amountClass = 'debit';
+        amountPrefix = '-₦';
+      } else if (tx.type === 'investment') {
+        amountClass = 'debit';
+        amountPrefix = '-₦';
+      } else if (tx.type === 'earning' || tx.type === 'roi' || tx.type === 'referral' || tx.type === 'bonus') {
+        amountClass = 'credit';
+        amountPrefix = '+₦';
+      }
+
+      let statusBadge = '';
+      if (tx.status === 'pending') {
+        statusBadge = '<span class="status status-pending">Pending</span>';
+      } else if (tx.status === 'approved' || tx.status === 'completed') {
+        statusBadge = '<span class="status status-approved">Approved</span>';
+      } else if (tx.status === 'rejected') {
+        statusBadge = '<span class="status status-rejected">Rejected</span>';
+      } else if (tx.status === 'active') {
+        statusBadge = '<span class="status status-active">Active</span>';
+      }
+
+      const txCard = document.createElement('div');
+      txCard.className = 'tx-card';
+      txCard.innerHTML = `
+        <div class="tx-icon ${iconClass}">${iconSvg}</div>
+        <div class="tx-info">
+          <div class="tx-title">${tx.title}</div>
+          <div class="tx-meta">
+            <span>${formatDateTime(tx.date)}</span>
+            <span class="dot"></span>
+            <span>${tx.description}</span>
+          </div>
+        </div>
+        <div class="tx-amount">
+          <div class="amt ${amountClass}">${amountPrefix}${fmt(displayAmount)}</div>
+          ${statusBadge}
+        </div>
+      `;
+      txList.appendChild(txCard);
+    });
+
+    if (transactions.length > PAGE_SIZE && !append) {
+      allTransactions = transactions;
+      lastVisible = PAGE_SIZE;
+      hasMore = PAGE_SIZE < transactions.length;
+      loadMoreBtn.style.display = hasMore ? 'block' : 'none';
+    } else if (append && lastVisible < allTransactions.length) {
+      loadMoreBtn.style.display = 'block';
+    } else {
+      loadMoreBtn.style.display = 'none';
+    }
+  }
+
+  // ════════════ LOAD MORE ════════════
+  window.loadMore = () => {
+    if (isLoading || !hasMore) return;
+    isLoading = true;
+    const loadMoreBtn = document.getElementById('loadMoreBtn');
+    loadMoreBtn.disabled = true;
+    loadMoreBtn.textContent = 'Loading...';
+
+    const end = Math.min(lastVisible + PAGE_SIZE, allTransactions.length);
+    const nextBatch = allTransactions.slice(lastVisible, end);
+    
+    renderTransactions(nextBatch, true);
+    
+    lastVisible = end;
+    hasMore = end < allTransactions.length;
+    
+    loadMoreBtn.disabled = false;
+    loadMoreBtn.textContent = 'Load More';
+    loadMoreBtn.style.display = hasMore ? 'block' : 'none';
+    isLoading = false;
+  };
+
+  // ════════════ FILTER ════════════
+  window.setFilter = (filter, btn) => {
+    currentFilter = filter;
+    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+
+    if (!currentUser) return;
+
+    const filtered = filterTransactions(allTransactions, filter);
+    updateSummary(filtered);
+    
+    document.getElementById('txList').innerHTML = '';
+    document.getElementById('loadMoreBtn').style.display = 'none';
+    lastVisible = 0;
+    
+    if (filtered.length === 0) {
+      document.getElementById('emptyState').style.display = 'block';
+    } else {
+      document.getElementById('emptyState').style.display = 'none';
+      allTransactions = filtered;
+      renderTransactions(filtered);
+    }
+  };
+
+  // ════════════ INIT ════════════
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) { window.location.href = 'login.html'; return; }
+    currentUser = user;
+
+    document.getElementById('loadingState').style.display = 'block';
+    document.getElementById('txList').innerHTML = '';
+    document.getElementById('emptyState').style.display = 'none';
+
+    try {
+      allTransactions = await fetchAllTransactions(user.uid);
+      document.getElementById('loadingState').style.display = 'none';
+
+      const filtered = filterTransactions(allTransactions, currentFilter);
+      updateSummary(filtered);
+      
+      if (filtered.length === 0) {
+        document.getElementById('emptyState').style.display = 'block';
+      } else {
+        allTransactions = filtered;
+        renderTransactions(filtered);
+      }
+    } catch (err) {
+      document.getElementById('loadingState').style.display = 'none';
+      document.getElementById('emptyState').style.display = 'block';
+      document.querySelector('#emptyState p').textContent = 'Could not load transactions. Pull to refresh.';
+    }
+  });
+</script>
+
+</body>
+</html>
