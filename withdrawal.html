@@ -205,7 +205,7 @@
   <!-- BANK TRANSFER FORM -->
   <div class="form-card" id="bankForm">
     <p class="section-title">Bank Transfer Withdrawal</p>
-    <p class="section-sub">Converted at ₦1,370 per USDT</p>
+    <p class="section-sub">Converted at ₦1,500 per USDT</p>
 
     <div class="form-field amount-field">
       <label>Amount (Min $1.00 USDT)</label>
@@ -278,7 +278,7 @@
   const auth = getAuth(app);
   const db = getFirestore(app);
 
-  const USD_RATE = 1370;
+  const USD_RATE = 1500;
   const fmt = n => Math.round(n || 0).toLocaleString();
   const fmtUSD = n => (n || 0).toFixed(2);
   const MIN_WITHDRAWAL = 1;
