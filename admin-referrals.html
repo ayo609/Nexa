@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<title>Nexa Admin – Referrals</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  :root{--bg:#0f0a1e;--card:#1a1333;--sidebar:#120c24;--primary:#7c3aed;--primary-dark:#6d28d9;--primary-soft:#2d1b69;--accent:#a78bfa;--text:#f5f3ff;--muted:#9d94b8;--border:#2d1f5e;--input-bg:#1e1644;--error:#ef4444;--success:#22c55e;--warn:#f59e0b;--gold:#fbbf24;--sidebar-width:250px;}
+  body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;overflow-x:hidden;}
+
+  .sidebar{width:var(--sidebar-width);min-width:var(--sidebar-width);background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:30;overflow-y:auto;overflow-x:hidden;padding:16px 0;}
+  .sidebar-inner{padding:0 14px;display:flex;flex-direction:column;flex:1;}
+  .sidebar .logo{display:flex;align-items:center;gap:10px;margin-bottom:28px;padding:4px 6px;text-decoration:none;flex-shrink:0;}
+  .logo-icon{width:40px;height:40px;border-radius:12px;background:var(--primary);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 12px rgba(124,58,237,0.4);}
+  .logo-icon svg{width:20px;height:20px;color:#fff;}
+  .sidebar .logo span{font-size:1.1rem;font-weight:800;color:var(--text);white-space:nowrap;}
+  .sidebar .logo em{color:var(--accent);font-style:normal;}
+  .nav-section{font-size:0.6rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;padding:18px 6px 8px;flex-shrink:0;}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:11px;color:var(--muted);text-decoration:none;font-size:0.84rem;font-weight:600;margin-bottom:2px;transition:all 0.15s;flex-shrink:0;}
+  .nav-item:hover{background:var(--primary-soft);color:var(--text);}
+  .nav-item.active{background:var(--primary);color:#fff;box-shadow:0 4px 12px rgba(124,58,237,0.3);}
+  .nav-item svg{width:19px;height:19px;flex-shrink:0;}
+  .nav-spacer{flex:1;}
+  .nav-item.logout{color:var(--error);margin-top:8px;}
+  .nav-item.logout:hover{background:rgba(239,68,68,0.15);}
+
+  .main-content{flex:1;margin-left:var(--sidebar-width);padding:24px 28px;min-height:100vh;overflow-y:auto;overflow-x:hidden;}
+  .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;}
+  .topbar h1{font-size:1.5rem;font-weight:800;}
+
+  .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
+  .stat-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;text-align:center;transition:all 0.2s;}
+  .stat-card:hover{border-color:var(--primary);transform:translateY(-2px);}
+  .stat-card .stat-icon{font-size:28px;margin-bottom:8px;}
+  .stat-card .stat-value{font-family:'DM Sans',sans-serif;font-size:1.8rem;font-weight:800;color:var(--text);}
+  .stat-card .stat-label{font-size:0.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-top:4px;font-weight:600;}
+
+  .section-card{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:auto;max-height:calc(100vh - 340px);}
+  .section-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--card);z-index:2;}
+  .section-header h3{font-size:1rem;font-weight:700;}
+  .count-badge{font-size:0.7rem;font-weight:700;padding:4px 12px;border-radius:50px;background:rgba(124,58,237,0.2);color:var(--accent);}
+
+  table{width:100%;border-collapse:collapse;min-width:900px;}
+  table th{font-size:0.62rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;padding:10px 10px;text-align:left;background:var(--input-bg);white-space:nowrap;position:sticky;top:52px;z-index:1;}
+  table td{font-size:0.78rem;padding:10px;border-bottom:1px solid var(--border);}
+  table tr:hover{background:rgba(124,58,237,0.04);}
+
+  .rank-badge{font-size:0.7rem;font-weight:700;padding:4px 10px;border-radius:50px;display:inline-block;}
+  .rank-badge.gold{background:rgba(251,191,36,0.2);color:var(--gold);}
+  .rank-badge.silver{background:rgba(168,175,190,0.2);color:#a8afbe;}
+  .rank-badge.bronze{background:rgba(205,127,50,0.2);color:#cd7f32;}
+  .rank-badge.elite{background:rgba(124,58,237,0.2);color:var(--accent);}
+
+  .status-pill{font-size:0.6rem;font-weight:700;padding:3px 8px;border-radius:50px;display:inline-block;}
+  .status-pill.active{background:rgba(34,197,94,0.2);color:var(--success);}
+  .status-pill.suspended{background:rgba(239,68,68,0.2);color:var(--error);}
+
+  .loading{text-align:center;padding:60px 20px;}
+  .spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .6s linear infinite;margin:0 auto 12px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .loading p{font-size:0.85rem;color:var(--muted);}
+  .empty{text-align:center;padding:50px;color:var(--muted);}
+
+  .toast{display:none;position:fixed;top:20px;right:20px;z-index:300;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 20px;font-size:0.85rem;font-weight:700;box-shadow:0 8px 30px rgba(0,0,0,0.5);animation:slideIn .3s ease;max-width:350px;}
+  @keyframes slideIn{from{opacity:0;transform:translateX(50px)}to{opacity:1;transform:translateX(0)}}
+
+  @media(max-width:900px){:root{--sidebar-width:60px;}.sidebar{padding:12px 0;}.sidebar-inner{padding:0 8px;}.sidebar .logo span,.nav-item span,.nav-section{display:none;}.nav-item{justify-content:center;padding:12px;}.logo-icon{width:36px;height:36px;}.main-content{padding:16px;}.stats-grid{grid-template-columns:repeat(2,1fr);}.section-card{max-height:calc(100vh - 300px);}table{min-width:700px;}}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-inner">
+    <a class="logo" href="admin-dashboard.html"><div class="logo-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div><span>Nex<em>a</em> Admin</span></a>
+    <div class="nav-section">Main</div>
+    <a href="admin-dashboard.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/></svg><span>Dashboard</span></a>
+    <div class="nav-section">Management</div>
+    <a href="admin-deposits.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M12 18V6"/></svg><span>Deposits</span></a>
+    <a href="admin-withdrawals.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12V8H6a2 2 0 010-4h12v4"/></svg><span>Withdrawals</span></a>
+    <a href="admin-investments.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/></svg><span>Investments</span></a>
+    <a href="admin-referrals.html" class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><span>Referrals</span></a>
+    <div class="nav-section">Users</div>
+    <a href="admin-users.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><span>All Users</span></a>
+    <div class="nav-section">System</div>
+    <a href="admin-settings.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/></svg><span>Settings</span></a>
+    <div class="nav-spacer"></div>
+    <a href="#" class="nav-item logout" onclick="adminLogout()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/></svg><span>Logout</span></a>
+  </div>
+</aside>
+
+<div class="main-content">
+  <div class="topbar"><h1>📊 Referral Management</h1></div>
+
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-value" id="totalUsers">0</div><div class="stat-label">Total Users</div></div>
+    <div class="stat-card"><div class="stat-icon">🔗</div><div class="stat-value" id="totalRefs">0</div><div class="stat-label">With Referrals</div></div>
+    <div class="stat-card"><div class="stat-icon">💰</div><div class="stat-value" id="totalBonuses">$0.00</div><div class="stat-label">Total Bonuses Paid</div></div>
+    <div class="stat-card"><div class="stat-icon">📊</div><div class="stat-value" id="totalDeposited">$0.00</div><div class="stat-label">Total Deposited</div></div>
+  </div>
+
+  <div class="section-card">
+    <div class="section-header"><h3>All Users — Referral Overview</h3><span class="count-badge" id="userCount">0 users</span></div>
+    <div id="referralsTable"><div class="loading"><div class="spinner"></div><p>Loading referral data...</p></div></div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { getFirestore, collection, getDocs, doc, getDoc, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  // ════════════ NEXA FIREBASE CONFIG ════════════
+  const firebaseConfig = {
+    apiKey: "AIzaSyA4nRl80lwklik6A8RTvE0Py-jNEg8PJ58",
+    authDomain: "nexa-a8cad.firebaseapp.com",
+    projectId: "nexa-a8cad",
+    storageBucket: "nexa-a8cad.firebasestorage.app",
+    messagingSenderId: "324559998149",
+    appId: "1:324559998149:web:e23ddfa3f0c71114eab4ac"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  const fmtUSD = n => (n || 0).toFixed(2);
+  let allUserData = [];
+
+  window.adminLogout = async () => {
+    sessionStorage.removeItem('nexa_admin_logged');
+    await signOut(auth);
+    window.location.href = 'admin-login.html';
+  };
+
+  function getRank(refCount, totalDeposited) {
+    if (refCount >= 20 || totalDeposited >= 5000) return { name: '🏆 Elite', class: 'elite' };
+    if (refCount >= 10 || totalDeposited >= 2000) return { name: '🥇 Gold', class: 'gold' };
+    if (refCount >= 5 || totalDeposited >= 500) return { name: '🥈 Silver', class: 'silver' };
+    if (refCount >= 1) return { name: '🥉 Bronze', class: 'bronze' };
+    return null;
+  }
+
+  async function loadReferralData() {
+    try {
+      // Fetch all users
+      const usersSnap = await getDocs(collection(db, 'users'));
+      const users = [];
+      usersSnap.forEach(d => users.push({ uid: d.id, ...d.data() }));
+
+      // Fetch referral logs for bonus totals
+      const refLogsSnap = await getDocs(collection(db, 'referralLogs'));
+      const bonusMap = {};
+      refLogsSnap.forEach(d => {
+        const log = d.data();
+        if (log.uplineId) {
+          bonusMap[log.uplineId] = (bonusMap[log.uplineId] || 0) + (log.bonus || 0);
+        }
+      });
+
+      // Fetch deposits for totals
+      const depositsSnap = await getDocs(query(collection(db, 'deposits'), where('status', '==', 'approved')));
+      const depositMap = {};
+      depositsSnap.forEach(d => {
+        const dep = d.data();
+        if (dep.userId) {
+          depositMap[dep.userId] = (depositMap[dep.userId] || 0) + (dep.amount || 0);
+        }
+      });
+
+      // Build user data with referral counts
+      allUserData = users.map(u => {
+        const refCount = users.filter(x => x.referredBy === u.uid).length;
+        const bonusEarned = bonusMap[u.uid] || 0;
+        const totalDeposited = depositMap[u.uid] || 0;
+        const rank = getRank(refCount, totalDeposited);
+        return {
+          ...u,
+          refCount,
+          bonusEarned,
+          totalDeposited,
+          rank
+        };
+      });
+
+      // Sort by referral count (highest first)
+      allUserData.sort((a, b) => b.refCount - a.refCount);
+
+      // Update stats
+      const totalRefs = allUserData.filter(u => u.refCount > 0).length;
+      const totalBonuses = Object.values(bonusMap).reduce((s, v) => s + v, 0);
+      const totalDepositedAll = Object.values(depositMap).reduce((s, v) => s + v, 0);
+
+      document.getElementById('totalUsers').textContent = users.length;
+      document.getElementById('totalRefs').textContent = totalRefs;
+      document.getElementById('totalBonuses').textContent = '$' + fmtUSD(totalBonuses);
+      document.getElementById('totalDeposited').textContent = '$' + fmtUSD(totalDepositedAll);
+      document.getElementById('userCount').textContent = allUserData.length + ' users';
+
+      // Render table
+      let html = '<table><tr><th>Rank</th><th>User</th><th>Balance</th><th>Referrals</th><th>Bonus Earned</th><th>Deposited</th><th>Ref Code</th><th>Status</th></tr>';
+      
+      if (allUserData.length === 0) {
+        html += '<tr><td colspan="8"><div class="empty"><p>No users found</p></div></td></tr>';
+      } else {
+        allUserData.forEach(u => {
+          const rankHtml = u.rank 
+            ? `<span class="rank-badge ${u.rank.class}">${u.rank.name}</span>`
+            : '<span style="color:var(--muted);">—</span>';
+          const status = u.status === 'suspended' ? 'suspended' : 'active';
+          
+          html += `<tr>
+            <td>${rankHtml}</td>
+            <td><strong>${u.email||'—'}</strong><br><small>${u.phone||''}</small></td>
+            <td>$${fmtUSD(u.walletBalance||0)}</td>
+            <td style="font-weight:700;">${u.refCount}</td>
+            <td style="color:var(--success);">$${fmtUSD(u.bonusEarned)}</td>
+            <td>$${fmtUSD(u.totalDeposited)}</td>
+            <td style="font-family:monospace;font-size:0.7rem;">${u.referralCode||'—'}</td>
+            <td><span class="status-pill ${status}">${status}</span></td>
+          </tr>`;
+        });
+      }
+      html += '</table>';
+      document.getElementById('referralsTable').innerHTML = html;
+
+    } catch (err) {
+      console.error('Load error:', err);
+      document.getElementById('referralsTable').innerHTML = '<div class="empty"><p>Error loading data. Check console.</p></div>';
+    }
+  }
+
+  onAuthStateChanged(auth, async (user) => {
+    // ════════════ CHECK FOR NEXA ADMIN SESSION ════════════
+    if (!user || !sessionStorage.getItem('nexa_admin_logged')) {
+      window.location.href = 'admin-login.html';
+      return;
+    }
+    await loadReferralData();
+  });
+</script>
+</body>
+</html>
