@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<title>Nexa Admin – Deposits</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  :root{
+    --bg:#0f0a1e;--card:#1a1333;--sidebar:#120c24;--primary:#7c3aed;--primary-dark:#6d28d9;
+    --primary-soft:#2d1b69;--accent:#a78bfa;--text:#f5f3ff;--muted:#9d94b8;--border:#2d1f5e;
+    --input-bg:#1e1644;--error:#ef4444;--success:#22c55e;--warn:#f59e0b;--sidebar-width:250px;
+  }
+  html,body{height:100%;overflow:hidden;}
+  body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);display:flex;}
+
+  .sidebar{width:var(--sidebar-width);min-width:var(--sidebar-width);background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:30;overflow-y:auto;padding:16px 0;}
+  .sidebar-inner{padding:0 14px;display:flex;flex-direction:column;flex:1;}
+  .sidebar .logo{display:flex;align-items:center;gap:10px;margin-bottom:24px;padding:4px 6px;text-decoration:none;flex-shrink:0;}
+  .logo-icon{width:40px;height:40px;border-radius:12px;background:var(--primary);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(124,58,237,0.4);}
+  .logo-icon svg{width:20px;height:20px;color:#fff;}
+  .sidebar .logo span{font-size:1.1rem;font-weight:800;color:var(--text);white-space:nowrap;}
+  .sidebar .logo em{color:var(--accent);font-style:normal;}
+  .nav-section{font-size:0.6rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;padding:14px 6px 8px;flex-shrink:0;}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:11px;color:var(--muted);text-decoration:none;font-size:0.84rem;font-weight:600;margin-bottom:2px;transition:all 0.15s;}
+  .nav-item:hover{background:var(--primary-soft);color:var(--text);}
+  .nav-item.active{background:var(--primary);color:#fff;box-shadow:0 4px 12px rgba(124,58,237,0.3);}
+  .nav-item svg{width:18px;height:18px;flex-shrink:0;}
+  .nav-spacer{flex:1;}
+  .nav-item.logout{color:var(--error);margin-top:8px;}
+  .nav-item.logout:hover{background:rgba(239,68,68,0.15);}
+
+  .main-content{flex:1;margin-left:var(--sidebar-width);display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+  .content-header{padding:20px 24px 0;flex-shrink:0;}
+  .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px;}
+  .topbar h1{font-size:1.4rem;font-weight:800;}
+  .refresh-btn{background:var(--primary);color:#fff;border:none;padding:9px 16px;border-radius:10px;font-family:inherit;font-size:0.82rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all 0.2s;}
+  .refresh-btn:hover{background:var(--primary-dark);}
+  .refresh-btn svg{width:15px;height:15px;}
+
+  .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
+  .stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px;}
+  .stat-card .stat-label{font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;}
+  .stat-card .stat-value{font-size:1.2rem;font-weight:800;}
+
+  .filter-tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;flex-shrink:0;}
+  .filter-tab{padding:7px 14px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--muted);font-family:inherit;font-size:0.75rem;font-weight:700;cursor:pointer;transition:all 0.15s;white-space:nowrap;}
+  .filter-tab:hover{border-color:var(--primary);color:var(--text);}
+  .filter-tab.active{background:var(--primary);border-color:var(--primary);color:#fff;}
+
+  .content-body{flex:1;overflow:hidden;padding:0 24px 20px;}
+  .section-card{background:var(--card);border:1px solid var(--border);border-radius:16px;display:flex;flex-direction:column;height:100%;overflow:hidden;}
+  .section-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-shrink:0;}
+  .section-header h3{font-size:0.95rem;font-weight:700;}
+  .count-badge{font-size:0.68rem;font-weight:700;padding:4px 10px;border-radius:50px;background:rgba(245,158,11,0.2);color:var(--warn);}
+
+  .table-scroll{flex:1;overflow:auto;}
+  table{width:100%;border-collapse:collapse;min-width:900px;}
+  table thead{position:sticky;top:0;z-index:2;}
+  table th{font-size:0.62rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px;padding:10px 10px;text-align:left;background:var(--input-bg);white-space:nowrap;border-bottom:1px solid var(--border);}
+  table td{font-size:0.78rem;padding:10px;border-bottom:1px solid var(--border);vertical-align:middle;}
+  table tbody tr:hover{background:rgba(124,58,237,0.04);}
+
+  .user-cell strong{display:block;font-size:0.78rem;}
+  .user-cell small{font-size:0.65rem;color:var(--muted);}
+  .amount-cell{font-weight:700;white-space:nowrap;}
+  .amount-cell.ngn{color:#14b8a6;}
+  .amount-cell.usdt{color:var(--accent);}
+
+  .usd-cell{white-space:nowrap;}
+  .usd-cell .ngn-amount{font-size:0.7rem;color:var(--muted);}
+  .usd-cell .arrow{color:var(--muted);margin:0 4px;font-size:0.65rem;}
+  .usd-cell .usd-amount{color:var(--success);font-weight:700;}
+
+  .method-badge{font-size:0.6rem;font-weight:700;padding:3px 8px;border-radius:50px;display:inline-block;white-space:nowrap;}
+  .method-badge.usdt{background:rgba(124,58,237,0.2);color:var(--accent);}
+  .method-badge.ngn{background:rgba(13,148,136,0.2);color:#14b8a6;}
+
+  .wallet-target{font-size:0.6rem;font-weight:600;padding:2px 6px;border-radius:4px;background:rgba(167,139,250,0.15);color:var(--accent);display:inline-block;margin-top:3px;}
+
+  .status-pill{font-size:0.6rem;font-weight:700;padding:3px 8px;border-radius:50px;display:inline-block;white-space:nowrap;}
+  .status-pill.pending{background:rgba(245,158,11,0.2);color:var(--warn);}
+  .status-pill.approved{background:rgba(34,197,94,0.2);color:var(--success);}
+  .status-pill.rejected{background:rgba(239,68,68,0.2);color:var(--error);}
+
+  .action-cell{white-space:nowrap;}
+  .btn{font-size:0.62rem;font-weight:700;padding:5px 10px;border-radius:7px;border:none;cursor:pointer;font-family:inherit;transition:all 0.15s;margin:1px;}
+  .btn.approve{background:rgba(34,197,94,0.2);color:var(--success);}
+  .btn.approve:hover{background:rgba(34,197,94,0.4);}
+  .btn.reject{background:rgba(239,68,68,0.2);color:var(--error);}
+  .btn.reject:hover{background:rgba(239,68,68,0.4);}
+  .btn.view{background:rgba(59,130,246,0.2);color:#60a5fa;}
+  .btn.view:hover{background:rgba(59,130,246,0.4);}
+
+  .loading{text-align:center;padding:50px 20px;}
+  .spinner{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .6s linear infinite;margin:0 auto 10px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .loading p{font-size:0.8rem;color:var(--muted);}
+  .empty{text-align:center;padding:40px;color:var(--muted);}
+
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);backdrop-filter:blur(6px);z-index:100;align-items:center;justify-content:center;padding:20px;}
+  .modal-overlay.show{display:flex;}
+  .modal{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:18px 22px;max-width:580px;width:100%;max-height:80vh;overflow-y:auto;animation:modalIn .25s ease;}
+  @keyframes modalIn{from{opacity:0;transform:scale(.95) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+  .modal h3{font-size:1rem;font-weight:800;margin-bottom:14px;display:flex;align-items:center;gap:8px;position:sticky;top:0;background:var(--card);padding-bottom:10px;z-index:2;}
+  .info-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px;}
+  .info-item{background:var(--input-bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px;}
+  .info-item .l{font-size:0.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:2px;}
+  .info-item .v{font-size:0.8rem;font-weight:700;color:var(--text);word-break:break-all;}
+  .info-item.full{grid-column:1/-1;}
+  .info-item.highlight{background:rgba(34,197,94,0.1);border-color:rgba(34,197,94,0.3);}
+
+  .receipt-container{background:#000;border-radius:12px;overflow:hidden;margin-bottom:12px;cursor:zoom-in;display:flex;align-items:center;justify-content:center;min-height:120px;max-height:250px;}
+  .receipt-container img{width:100%;max-height:250px;object-fit:contain;display:block;}
+  .receipt-container.zoomed{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.95);cursor:zoom-out;max-height:100vh;border-radius:0;padding:20px;}
+  .receipt-container.zoomed img{max-height:90vh;}
+  .receipt-actions{display:flex;gap:6px;margin-top:6px;}
+  .receipt-actions .btn{flex:1;text-align:center;padding:8px;}
+  .no-receipt{text-align:center;padding:25px;color:var(--muted);background:var(--input-bg);border-radius:12px;}
+
+  .modal-actions{display:flex;gap:8px;margin-top:12px;position:sticky;bottom:0;background:var(--card);padding-top:10px;z-index:2;flex-wrap:wrap;}
+  .modal-btn{flex:1;min-width:90px;padding:10px;border:none;border-radius:10px;font-family:inherit;font-size:0.82rem;font-weight:700;cursor:pointer;transition:all 0.15s;}
+  .modal-btn.ghost{background:var(--input-bg);color:var(--muted);border:1px solid var(--border);}
+  .modal-btn.success{background:var(--success);color:#fff;}
+  .modal-btn.success:hover{background:#15803d;}
+  .modal-btn.danger{background:var(--error);color:#fff;}
+  .modal-btn.danger:hover{background:#b91c1c;}
+
+  #toast{display:none;position:fixed;top:16px;right:16px;z-index:300;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 18px;font-size:0.82rem;font-weight:700;box-shadow:0 8px 30px rgba(0,0,0,0.5);animation:slideIn .3s ease;max-width:320px;}
+  @keyframes slideIn{from{opacity:0;transform:translateX(50px)}to{opacity:1;transform:translateX(0)}}
+
+  @media(max-width:1024px){.stats-row{grid-template-columns:repeat(2,1fr);}}
+  @media(max-width:900px){
+    :root{--sidebar-width:60px;}
+    .sidebar{padding:12px 0;}.sidebar-inner{padding:0 8px;}
+    .sidebar .logo span,.nav-item span,.nav-section{display:none;}
+    .nav-item{justify-content:center;padding:12px;}
+    .logo-icon{width:36px;height:36px;}
+    .content-header{padding:14px 14px 0;}
+    .content-body{padding:0 14px 14px;}
+    .info-grid{grid-template-columns:1fr;}
+    .modal-actions{flex-direction:column;}
+  }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-inner">
+    <a class="logo" href="admin-dashboard.html"><div class="logo-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div><span>Nex<em>a</em> Admin</span></a>
+    <div class="nav-section">📊 Main Menu</div>
+    <a href="admin-dashboard.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/></svg><span>📈 Dashboard</span></a>
+    <div class="nav-section">💼 Transaction Management</div>
+    <a href="admin-deposits.html" class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M12 18V6"/></svg><span>💰 Deposits</span></a>
+    <a href="admin-withdrawals.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12V8H6a2 2 0 010-4h12v4"/></svg><span>💸 Withdrawals</span></a>
+    <a href="admin-investments.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/></svg><span>📦 Investments</span></a>
+    <a href="admin-referrals.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><span>👥 Referrals</span></a>
+    <div class="nav-section">👤 User Management</div>
+    <a href="admin-management.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><span>🔍 User Manager</span></a>
+    <div class="nav-section">⚙️ System</div>
+    <a href="admin-settings.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/></svg><span>🔧 Settings</span></a>
+    <div class="nav-spacer"></div>
+    <a href="#" class="nav-item logout" onclick="adminLogout()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/></svg><span>🚪 Logout</span></a>
+  </div>
+</aside>
+
+<div class="main-content">
+  <div class="content-header">
+    <div class="topbar">
+      <h1>💰 Deposit Management</h1>
+      <button class="refresh-btn" onclick="loadDeposits()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+        Refresh
+      </button>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-label">💎 USDT</div><div class="stat-value" style="color:var(--accent);" id="statUSDT">0</div></div>
+      <div class="stat-card"><div class="stat-label">🏦 NGN</div><div class="stat-value" style="color:#14b8a6;" id="statNGN">0</div></div>
+      <div class="stat-card"><div class="stat-label">⏳ Pending</div><div class="stat-value" style="color:var(--warn);" id="statPending">0</div></div>
+      <div class="stat-card"><div class="stat-label">✅ Approved</div><div class="stat-value" style="color:var(--success);" id="statApproved">0</div></div>
+    </div>
+
+    <div class="filter-tabs">
+      <button class="filter-tab active" onclick="filterDeposits('all', this)">📋 All</button>
+      <button class="filter-tab" onclick="filterDeposits('usdt', this)">💎 USDT</button>
+      <button class="filter-tab" onclick="filterDeposits('ngn', this)">🏦 NGN</button>
+      <button class="filter-tab" onclick="filterDeposits('pending', this)">⏳ Pending</button>
+      <button class="filter-tab" onclick="filterDeposits('approved', this)">✅ Approved</button>
+      <button class="filter-tab" onclick="filterDeposits('rejected', this)">❌ Rejected</button>
+    </div>
+  </div>
+
+  <div class="content-body">
+    <div class="section-card">
+      <div class="section-header"><h3>Deposit Requests</h3><span class="count-badge" id="depCount">0 total</span></div>
+      <div class="table-scroll" id="depositsTable">
+        <div class="loading"><div class="spinner"></div><p>Loading deposits...</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="detailModal"><div class="modal" id="detailModalContent"></div></div>
+<div id="toast"></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { getFirestore, collection, query, orderBy, onSnapshot, doc, updateDoc, serverTimestamp, increment } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = { apiKey: "AIzaSyA4nRl80lwklik6A8RTvE0Py-jNEg8PJ58", authDomain: "nexa-a8cad.firebaseapp.com", projectId: "nexa-a8cad", storageBucket: "nexa-a8cad.firebasestorage.app", messagingSenderId: "324559998149", appId: "1:324559998149:web:e23ddfa3f0c71114eab4ac" };
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  const EXCHANGE_RATE = 1500;
+  const fmt = n => Math.round(n || 0).toLocaleString();
+  const fmtUSD = n => (n || 0).toFixed(2);
+  
+  let allDeposits = [];
+  let currentFilter = 'all';
+  let unsubscribe = null;
+
+  window.adminLogout = async () => { 
+    sessionStorage.removeItem('nexa_admin_logged'); 
+    if (unsubscribe) unsubscribe();
+    await signOut(auth); 
+    window.location.href = 'admin-login.html'; 
+  };
+
+  function showToast(msg, type = 'success') {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg; toast.style.display = 'block';
+    toast.style.borderColor = type === 'success' ? 'var(--success)' : 'var(--error)';
+    toast.style.color = type === 'success' ? 'var(--success)' : 'var(--error)';
+    setTimeout(() => toast.style.display = 'none', 3000);
+  }
+
+  function convertNGNtoUSD(ngnAmount) { return ngnAmount / EXCHANGE_RATE; }
+
+  function getCurrencyInfo(dep) {
+    const currency = dep.currency || (dep.method === 'ngn' ? 'NGN' : 'USDT');
+    const isNGN = currency === 'NGN';
+    const usdEquivalent = isNGN ? convertNGNtoUSD(dep.amount) : dep.amount;
+    return {
+      currency, isNGN, usdEquivalent,
+      ngnFormatted: isNGN ? `₦${fmt(dep.amount)}` : '',
+      usdFormatted: `$${fmtUSD(usdEquivalent)}`,
+      label: isNGN ? 'NGN Transfer' : 'USDT Crypto',
+      methodClass: isNGN ? 'ngn' : 'usdt',
+      methodIcon: isNGN ? '🏦' : '💎',
+      network: isNGN ? 'Bank Transfer' : (dep.network || 'TRC20'),
+      bankInfo: isNGN ? { bankName: dep.bankName || 'Ecobank', accountNumber: dep.accountNumber || '0101204119', accountName: dep.accountName || 'Onyinye Nwaokolo' } : null,
+      walletAddress: dep.walletAddress || 'THjDGcUtThtAwP2pzmHEfLXS4pp6PjbqDT'
+    };
+  }
+
+  window.filterDeposits = (filter, btn) => {
+    currentFilter = filter;
+    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    renderDeposits();
+  };
+
+  window.toggleZoom = (container) => container.classList.toggle('zoomed');
+
+  window.viewDepositDetails = (dep) => {
+    const modal = document.getElementById('detailModalContent');
+    const date = dep.createdAt?.toMillis ? new Date(dep.createdAt.toMillis()).toLocaleString('en-US', { weekday:'short', day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '—';
+    const hasReceipt = dep.receiptImage && dep.receiptImage.length > 100;
+    const depId = dep.id, userId = dep.userId;
+    const ci = getCurrencyInfo(dep);
+
+    let bankHTML = ci.isNGN && ci.bankInfo ? `<div class="info-item full"><div class="l">🏦 Bank Details</div><div class="v"><strong>${ci.bankInfo.bankName}</strong> | A/C: ${ci.bankInfo.accountNumber} | ${ci.bankInfo.accountName}</div></div>` : '';
+    let walletHTML = !ci.isNGN ? `<div class="info-item full"><div class="l">Wallet</div><div class="v" style="font-size:0.62rem;font-family:monospace;">${ci.walletAddress}</div></div>` : '';
+    let convHTML = ci.isNGN ? `<div class="info-item full highlight"><div class="l">💰 USD Equivalent (Credits to Deposit Wallet)</div><div class="v" style="font-size:1rem;color:var(--success);">${ci.usdFormatted}</div><small style="color:var(--muted);">Rate: ₦${fmt(EXCHANGE_RATE)} = $1 | Credited to: 💰 Deposit Wallet</small></div>` : '';
+
+    modal.innerHTML = `
+      <h3>${ci.methodIcon} Deposit Details <span class="method-badge ${ci.methodClass}" style="margin-left:8px;">${ci.label}</span></h3>
+      <div class="info-grid">
+        <div class="info-item"><div class="l">User</div><div class="v">${dep.userEmail||'—'}</div></div>
+        <div class="info-item"><div class="l">Status</div><div class="v"><span class="status-pill ${dep.status}">${dep.status}</span></div></div>
+        ${ci.isNGN ? `<div class="info-item"><div class="l">NGN Amount</div><div class="v" style="color:#14b8a6;">${ci.ngnFormatted}</div></div>` : `<div class="info-item"><div class="l">USDT Amount</div><div class="v" style="color:var(--accent);">${ci.usdFormatted}</div></div>`}
+        <div class="info-item"><div class="l">Payer</div><div class="v">${dep.payerName||'—'}</div></div>
+        ${convHTML}
+        <div class="info-item"><div class="l">Method</div><div class="v"><span class="method-badge ${ci.methodClass}">${ci.methodIcon} ${ci.currency}</span></div></div>
+        <div class="info-item"><div class="l">Network</div><div class="v">${ci.network}</div></div>
+        ${bankHTML}${walletHTML}
+        <div class="info-item"><div class="l">Date</div><div class="v">${date}</div></div>
+        <div class="info-item full"><div class="l">User ID</div><div class="v" style="font-size:0.6rem;font-family:monospace;">${userId||'—'}</div></div>
+      </div>
+      <h4 style="margin-bottom:8px;font-size:0.85rem;">📸 Receipt</h4>
+      ${hasReceipt ? `<div class="receipt-container" id="receiptZoom" onclick="toggleZoom(this)"><img src="${dep.receiptImage}" alt="Receipt" /></div><div class="receipt-actions"><button class="btn view" onclick="toggleZoom(document.getElementById('receiptZoom'))">🔍 Zoom</button><a href="${dep.receiptImage}" target="_blank" class="btn view" style="text-decoration:none;">🔗 Open</a></div>` : `<div class="no-receipt"><p>No receipt uploaded</p></div>`}
+      <div class="modal-actions">
+        <button class="modal-btn ghost" id="modalClose">Close</button>
+        ${dep.status==='pending'?`<button class="modal-btn success" id="modalApprove">✅ Approve & Credit ${ci.usdFormatted} to Deposit Wallet</button><button class="modal-btn danger" id="modalReject">❌ Reject</button>`:`<button class="modal-btn ghost" id="modalClose2">Close</button>`}
+      </div>`;
+    document.getElementById('detailModal').classList.add('show');
+    const cb = document.getElementById('modalClose') || document.getElementById('modalClose2');
+    if (cb) cb.addEventListener('click', closeDetailModal);
+    if (dep.status==='pending') {
+      document.getElementById('modalApprove').addEventListener('click', ()=>approveDeposit(depId,userId,ci));
+      document.getElementById('modalReject').addEventListener('click', ()=>rejectDeposit(depId));
+    }
+  };
+
+  window.closeDetailModal = () => document.getElementById('detailModal').classList.remove('show');
+
+  // ════════════ APPROVE DEPOSIT (Credits to depositWallet) ════════════
+  window.approveDeposit = async (depId, userId, ci) => {
+    const ca = ci.usdEquivalent;
+    if (!confirm(ci.isNGN?`Approve ${ci.ngnFormatted} NGN?\nCredit to Deposit Wallet: ${ci.usdFormatted}\nRate: ₦${fmt(EXCHANGE_RATE)}=$1`:`Approve ${ci.usdFormatted} USDT?\nThis will credit the user's Deposit Wallet.`)) return;
+    try {
+      // Update deposit status
+      await updateDoc(doc(db,'deposits',depId),{
+        status:'approved',
+        approvedAt:serverTimestamp(),
+        reviewed:true,
+        creditedAmount:ca,
+        exchangeRate:ci.isNGN?EXCHANGE_RATE:null,
+        creditedTo: 'depositWallet'
+      });
+      // Credit to depositWallet AND update walletBalance (total sync)
+      await updateDoc(doc(db,'users',userId),{
+        depositWallet: increment(ca),
+        walletBalance: increment(ca)  // Keep total in sync
+      });
+      showToast(`✅ ${ci.usdFormatted} credited to Deposit Wallet!`,'success');
+      closeDetailModal();
+    } catch(e){showToast('Error: '+e.message,'error');}
+  };
+
+  window.rejectDeposit = async (depId) => {
+    if(!confirm('Reject?'))return;
+    try{await updateDoc(doc(db,'deposits',depId),{status:'rejected',reviewed:true});showToast('❌ Rejected','error');closeDetailModal();}
+    catch(e){showToast('Error: '+e.message,'error');}
+  };
+
+  function renderDeposits() {
+    let f = allDeposits;
+    if(currentFilter==='usdt') f=f.filter(d=>getCurrencyInfo(d).currency==='USDT');
+    else if(currentFilter==='ngn') f=f.filter(d=>getCurrencyInfo(d).currency==='NGN');
+    else if(currentFilter==='pending') f=f.filter(d=>d.status==='pending');
+    else if(currentFilter==='approved') f=f.filter(d=>d.status==='approved');
+    else if(currentFilter==='rejected') f=f.filter(d=>d.status==='rejected');
+
+    document.getElementById('statUSDT').textContent=allDeposits.filter(d=>getCurrencyInfo(d).currency==='USDT').length;
+    document.getElementById('statNGN').textContent=allDeposits.filter(d=>getCurrencyInfo(d).currency==='NGN').length;
+    document.getElementById('statPending').textContent=allDeposits.filter(d=>d.status==='pending').length;
+    document.getElementById('statApproved').textContent=allDeposits.filter(d=>d.status==='approved').length;
+    document.getElementById('depCount').textContent=f.length+' total';
+
+    if(!f.length){document.getElementById('depositsTable').innerHTML='<div class="empty"><p>No deposits found</p></div>';return;}
+
+    let h='<table><thead><tr><th>User</th><th>Amount</th><th>USD Equiv</th><th>Method</th><th>Credits To</th><th>Payer</th><th>Receipt</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead><tbody>';
+    f.forEach(d=>{
+      const dt=d.createdAt?.toMillis?new Date(d.createdAt.toMillis()).toLocaleDateString('en-US',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'—';
+      const ci=getCurrencyInfo(d);
+      h+=`<tr>
+        <td class="user-cell"><strong>${d.userEmail||'—'}</strong><small>${(d.userId||'').substring(0,8)}...</small></td>
+        <td class="amount-cell ${ci.isNGN?'ngn':'usdt'}">${ci.isNGN?ci.ngnFormatted:ci.usdFormatted}</td>
+        <td class="usd-cell">${ci.isNGN?`<span class="ngn-amount">${ci.ngnFormatted}</span><span class="arrow">→</span><span class="usd-amount">${ci.usdFormatted}</span>`:`<span class="usd-amount">${ci.usdFormatted}</span>`}</td>
+        <td><span class="method-badge ${ci.methodClass}">${ci.methodIcon} ${ci.currency}</span></td>
+        <td><span class="wallet-target">💰 Deposit</span></td>
+        <td>${d.payerName||'—'}</td>
+        <td>${d.receiptImage&&d.receiptImage.length>100?'<span style="color:var(--success);">📸 Yes</span>':'<span style="color:var(--muted);">—</span>'}</td>
+        <td><span class="status-pill ${d.status}">${d.status}</span></td>
+        <td style="white-space:nowrap;">${dt}</td>
+        <td class="action-cell"><button class="btn view" data-depid="${d.id}">📋</button>${d.status==='pending'?`<button class="btn approve" data-depid="${d.id}">✓</button><button class="btn reject" data-depid="${d.id}">✗</button>`:''}</td></tr>`;
+    });
+    h+='</tbody></table>';
+    document.getElementById('depositsTable').innerHTML=h;
+
+    document.querySelectorAll('.btn.view').forEach(b=>b.addEventListener('click',()=>{const dep=allDeposits.find(d=>d.id===b.dataset.depid);if(dep)viewDepositDetails(dep);}));
+    document.querySelectorAll('.btn.approve').forEach(b=>b.addEventListener('click',()=>{const dep=allDeposits.find(d=>d.id===b.dataset.depid);if(dep){approveDeposit(b.dataset.depid,dep.userId,getCurrencyInfo(dep));}}));
+    document.querySelectorAll('.btn.reject').forEach(b=>b.addEventListener('click',()=>rejectDeposit(b.dataset.depid)));
+  }
+
+  function loadDeposits() {
+    document.getElementById('depositsTable').innerHTML='<div class="loading"><div class="spinner"></div><p>Loading...</p></div>';
+    if(unsubscribe)unsubscribe();
+    unsubscribe=onSnapshot(query(collection(db,'deposits'),orderBy('createdAt','desc')),snap=>{allDeposits=[];snap.forEach(d=>allDeposits.push({id:d.id,...d.data()}));renderDeposits();},err=>{document.getElementById('depositsTable').innerHTML=`<div class="empty"><p>Error: ${err.message}</p><button class="btn view" onclick="loadDeposits()">Retry</button></div>`;});
+  }
+
+  onAuthStateChanged(auth,u=>{if(!u||!sessionStorage.getItem('nexa_admin_logged')){window.location.href='admin-login.html';return;}loadDeposits();});
+  window.addEventListener('beforeunload',()=>{if(unsubscribe)unsubscribe();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDetailModal();});
+</script>
+</body>
+</html>
