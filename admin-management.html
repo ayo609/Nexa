@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<title>Nexa Admin – User Management</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  :root{
+    --bg:#0f0a1e;--card:#1a1333;--sidebar:#120c24;--primary:#7c3aed;--primary-dark:#6d28d9;
+    --primary-soft:#2d1b69;--accent:#a78bfa;--text:#f5f3ff;--muted:#9d94b8;--border:#2d1f5e;
+    --input-bg:#1e1644;--error:#ef4444;--success:#22c55e;--warn:#f59e0b;--info:#3b82f6;
+    --sidebar-width:250px;
+  }
+  html,body{height:100%;overflow:hidden;}
+  body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);display:flex;}
+
+  .sidebar{width:var(--sidebar-width);min-width:var(--sidebar-width);background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:30;overflow-y:auto;padding:16px 0;}
+  .sidebar-inner{padding:0 14px;display:flex;flex-direction:column;flex:1;}
+  .sidebar .logo{display:flex;align-items:center;gap:10px;margin-bottom:24px;padding:4px 6px;text-decoration:none;}
+  .logo-icon{width:40px;height:40px;border-radius:12px;background:var(--primary);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(124,58,237,0.4);}
+  .logo-icon svg{width:20px;height:20px;color:#fff;}
+  .sidebar .logo span{font-size:1.1rem;font-weight:800;color:var(--text);white-space:nowrap;}
+  .sidebar .logo em{color:var(--accent);font-style:normal;}
+  .nav-section{font-size:0.6rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;padding:14px 6px 8px;}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:11px;color:var(--muted);text-decoration:none;font-size:0.84rem;font-weight:600;margin-bottom:2px;transition:all 0.15s;}
+  .nav-item:hover{background:var(--primary-soft);color:var(--text);}
+  .nav-item.active{background:var(--primary);color:#fff;box-shadow:0 4px 12px rgba(124,58,237,0.3);}
+  .nav-item svg{width:18px;height:18px;flex-shrink:0;}
+  .nav-spacer{flex:1;}
+  .nav-item.logout{color:var(--error);margin-top:8px;}
+  .nav-item.logout:hover{background:rgba(239,68,68,0.15);}
+
+  .main-content{flex:1;margin-left:var(--sidebar-width);display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+  .content-header{padding:20px 24px 0;flex-shrink:0;}
+  .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px;}
+  .topbar h1{font-size:1.4rem;font-weight:800;}
+  .topbar-actions{display:flex;gap:8px;align-items:center;}
+  .search-box{position:relative;}
+  .search-box input{background:var(--input-bg);border:1px solid var(--border);border-radius:10px;padding:9px 14px 9px 36px;font-family:inherit;font-size:0.82rem;color:var(--text);width:260px;outline:none;transition:all 0.2s;}
+  .search-box input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(124,58,237,0.15);}
+  .search-box svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--muted);}
+  .refresh-btn{background:var(--primary);color:#fff;border:none;padding:9px 16px;border-radius:10px;font-family:inherit;font-size:0.82rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all 0.2s;}
+  .refresh-btn:hover{background:var(--primary-dark);}
+  .refresh-btn svg{width:15px;height:15px;}
+
+  .stats-row{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:16px;}
+  .stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px;text-align:center;}
+  .stat-card .stat-label{font-size:0.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:3px;}
+  .stat-card .stat-value{font-size:1.1rem;font-weight:800;}
+
+  .content-body{flex:1;overflow:hidden;padding:0 24px 20px;}
+  .section-card{background:var(--card);border:1px solid var(--border);border-radius:16px;display:flex;flex-direction:column;height:100%;overflow:hidden;}
+  .section-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-shrink:0;}
+  .section-header h3{font-size:0.95rem;font-weight:700;}
+  .count-badge{font-size:0.68rem;font-weight:700;padding:4px 10px;border-radius:50px;background:rgba(245,158,11,0.2);color:var(--warn);}
+  .filter-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .filter-select{background:var(--input-bg);border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-family:inherit;font-size:0.75rem;color:var(--text);outline:none;cursor:pointer;}
+  .filter-select:focus{border-color:var(--primary);}
+
+  .table-scroll{flex:1;overflow:auto;}
+  table{width:100%;border-collapse:collapse;min-width:1100px;}
+  table thead{position:sticky;top:0;z-index:2;}
+  table th{font-size:0.6rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.3px;padding:10px 8px;text-align:left;background:var(--input-bg);white-space:nowrap;border-bottom:1px solid var(--border);}
+  table td{font-size:0.75rem;padding:10px 8px;border-bottom:1px solid var(--border);vertical-align:middle;}
+  table tbody tr:hover{background:rgba(124,58,237,0.04);}
+  table tbody tr{cursor:pointer;}
+  .user-cell{display:flex;align-items:center;gap:10px;}
+  .user-avatar{width:36px;height:36px;border-radius:50%;background:var(--primary-soft);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;color:var(--accent);flex-shrink:0;}
+  .user-info strong{display:block;font-size:0.8rem;}
+  .user-info small{font-size:0.65rem;color:var(--muted);}
+
+  .wallet-chip{font-size:0.55rem;font-weight:600;padding:2px 5px;border-radius:3px;display:inline-block;white-space:nowrap;}
+  .wallet-chip.deposit{background:rgba(167,139,250,0.12);color:var(--accent);}
+  .wallet-chip.withdraw{background:rgba(34,197,94,0.12);color:var(--success);}
+
+  .status-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:6px;}
+  .status-dot.active{background:var(--success);}
+  .status-dot.inactive{background:var(--muted);}
+  .status-dot.suspended{background:var(--error);}
+
+  .badge{font-size:0.6rem;font-weight:700;padding:3px 8px;border-radius:50px;display:inline-block;white-space:nowrap;}
+  .badge.success{background:rgba(34,197,94,0.2);color:var(--success);}
+  .badge.warn{background:rgba(245,158,11,0.2);color:var(--warn);}
+  .badge.error{background:rgba(239,68,68,0.2);color:var(--error);}
+  .badge.info{background:rgba(59,130,246,0.2);color:var(--info);}
+
+  .btn{font-size:0.62rem;font-weight:700;padding:5px 10px;border-radius:7px;border:none;cursor:pointer;font-family:inherit;transition:all 0.15s;margin:1px;white-space:nowrap;}
+  .btn.primary{background:var(--primary);color:#fff;}
+  .btn.primary:hover{background:var(--primary-dark);}
+  .btn.success{background:rgba(34,197,94,0.2);color:var(--success);}
+  .btn.success:hover{background:rgba(34,197,94,0.4);}
+  .btn.danger{background:rgba(239,68,68,0.2);color:var(--error);}
+  .btn.danger:hover{background:rgba(239,68,68,0.4);}
+  .btn.warn{background:rgba(245,158,11,0.2);color:var(--warn);}
+  .btn.warn:hover{background:rgba(245,158,11,0.4);}
+  .btn.info{background:rgba(59,130,246,0.2);color:var(--info);}
+  .btn.info:hover{background:rgba(59,130,246,0.4);}
+
+  .loading{text-align:center;padding:50px 20px;}
+  .spinner{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .6s linear infinite;margin:0 auto 10px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .loading p{font-size:0.8rem;color:var(--muted);}
+  .empty{text-align:center;padding:40px;color:var(--muted);}
+
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);z-index:100;align-items:center;justify-content:center;padding:16px;}
+  .modal-overlay.show{display:flex;}
+  .modal{background:var(--card);border:1px solid var(--border);border-radius:20px;width:95%;max-width:900px;max-height:90vh;display:flex;flex-direction:column;animation:modalIn .25s ease;}
+  @keyframes modalIn{from{opacity:0;transform:scale(.95) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+  .modal-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-shrink:0;}
+  .modal-header h3{font-size:1rem;font-weight:800;display:flex;align-items:center;gap:8px;}
+  .modal-close{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.2rem;padding:4px 8px;border-radius:8px;transition:all 0.2s;}
+  .modal-close:hover{background:var(--input-bg);color:var(--text);}
+
+  .modal-tabs{display:flex;gap:2px;padding:0 20px;border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto;}
+  .modal-tab{padding:10px 14px;font-size:0.72rem;font-weight:700;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all 0.15s;}
+  .modal-tab:hover{color:var(--text);}
+  .modal-tab.active{color:var(--primary);border-bottom-color:var(--primary);}
+  .modal-tab .tab-badge{font-size:0.58rem;background:var(--primary-soft);color:var(--accent);padding:2px 6px;border-radius:50px;margin-left:4px;}
+
+  .modal-body{flex:1;overflow-y:auto;padding:16px 20px;}
+  .tab-content{display:none;}
+  .tab-content.active{display:block;}
+
+  .info-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+  .info-item{background:var(--input-bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;}
+  .info-item .l{font-size:0.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.3px;margin-bottom:3px;}
+  .info-item .v{font-size:0.8rem;font-weight:700;color:var(--text);}
+  .info-item.highlight-deposit{background:rgba(167,139,250,0.08);border-color:rgba(167,139,250,0.25);}
+  .info-item.highlight-withdraw{background:rgba(34,197,94,0.08);border-color:rgba(34,197,94,0.25);}
+
+  .mini-table{width:100%;border-collapse:collapse;font-size:0.72rem;}
+  .mini-table th{font-size:0.58rem;font-weight:700;color:var(--muted);text-transform:uppercase;padding:8px 6px;text-align:left;background:var(--input-bg);border-bottom:1px solid var(--border);white-space:nowrap;}
+  .mini-table td{padding:8px 6px;border-bottom:1px solid var(--border);vertical-align:middle;}
+  .mini-table tbody tr:hover{background:rgba(124,58,237,0.04);}
+
+  .status-pill{font-size:0.58rem;font-weight:700;padding:3px 7px;border-radius:50px;display:inline-block;white-space:nowrap;}
+  .status-pill.running{background:rgba(34,197,94,0.2);color:var(--success);}
+  .status-pill.paused{background:rgba(245,158,11,0.2);color:var(--warn);}
+  .status-pill.completed{background:rgba(13,148,136,0.2);color:#14b8a6;}
+  .status-pill.locked{background:rgba(239,68,68,0.2);color:var(--error);}
+
+  .progress-mini{height:5px;background:var(--input-bg);border-radius:50px;overflow:hidden;margin-top:4px;}
+  .progress-mini-fill{height:100%;border-radius:50px;background:var(--primary);}
+
+  .referral-level{margin-bottom:16px;}
+  .referral-level h4{font-size:0.8rem;font-weight:700;margin-bottom:8px;color:var(--accent);display:flex;align-items:center;gap:6px;}
+  .referral-level h4 .level-badge{font-size:0.6rem;background:var(--primary-soft);padding:2px 8px;border-radius:50px;}
+
+  .action-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+  .action-card{background:var(--input-bg);border:1px solid var(--border);border-radius:10px;padding:12px 14px;flex:1;min-width:200px;}
+  .action-card .action-title{font-size:0.7rem;font-weight:700;margin-bottom:8px;color:var(--muted);text-transform:uppercase;letter-spacing:0.3px;}
+  .action-card .action-btns{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+
+  .notes-list{display:flex;flex-direction:column;gap:8px;}
+  .note-item{background:var(--input-bg);border:1px solid var(--border);border-radius:10px;padding:10px 14px;}
+  .note-item .note-header{display:flex;justify-content:space-between;margin-bottom:4px;}
+  .note-item .note-author{font-size:0.7rem;font-weight:700;color:var(--accent);}
+  .note-item .note-date{font-size:0.6rem;color:var(--muted);}
+  .note-item .note-text{font-size:0.78rem;color:var(--text);}
+  .add-note{display:flex;gap:8px;margin-top:12px;}
+  .add-note input{flex:1;background:var(--input-bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-family:inherit;font-size:0.78rem;color:var(--text);outline:none;}
+  .add-note input:focus{border-color:var(--primary);}
+
+  .confirm-modal{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px 24px;max-width:420px;width:100%;text-align:center;animation:modalIn .25s ease;}
+  .confirm-modal h3{font-size:1rem;font-weight:800;margin-bottom:8px;}
+  .confirm-modal p{font-size:0.82rem;color:var(--muted);margin-bottom:16px;line-height:1.5;}
+  .confirm-modal .confirm-actions{display:flex;gap:8px;}
+  .confirm-modal .confirm-actions button{flex:1;}
+
+  #toast{display:none;position:fixed;top:16px;right:16px;z-index:300;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 18px;font-size:0.82rem;font-weight:700;box-shadow:0 8px 30px rgba(0,0,0,0.5);animation:slideIn .3s ease;max-width:320px;}
+  @keyframes slideIn{from{opacity:0;transform:translateX(50px)}to{opacity:1;transform:translateX(0)}}
+
+  @media(max-width:1200px){.stats-row{grid-template-columns:repeat(3,1fr);}.info-grid{grid-template-columns:repeat(2,1fr);}}
+  @media(max-width:900px){
+    :root{--sidebar-width:60px;}
+    .sidebar{padding:12px 0;}.sidebar-inner{padding:0 8px;}
+    .sidebar .logo span,.nav-item span,.nav-section{display:none;}
+    .nav-item{justify-content:center;padding:12px;}
+    .logo-icon{width:36px;height:36px;}
+    .content-header{padding:14px 14px 0;}.content-body{padding:0 14px 14px;}
+    .stats-row{grid-template-columns:repeat(2,1fr);}
+    .info-grid{grid-template-columns:1fr;}
+    .search-box input{width:180px;}
+    .modal{max-width:100%;border-radius:0;}
+  }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-inner">
+    <a class="logo" href="admin-dashboard.html"><div class="logo-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div><span>Nex<em>a</em> Admin</span></a>
+    <div class="nav-section">📊 Main Menu</div>
+    <a href="admin-dashboard.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/></svg><span>📈 Dashboard</span></a>
+    <div class="nav-section">💼 Transaction Management</div>
+    <a href="admin-deposits.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M12 18V6"/></svg><span>💰 Deposits</span></a>
+    <a href="admin-withdrawals.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12V8H6a2 2 0 010-4h12v4"/></svg><span>💸 Withdrawals</span></a>
+    <a href="admin-investments.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/></svg><span>📦 Investments</span></a>
+    <a href="admin-referrals.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><span>👥 Referrals</span></a>
+    <div class="nav-section">👤 User Management</div>
+    <a href="admin-management.html" class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><span>🔍 User Manager</span></a>
+    <a href="admin-users.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><span>👥 All Users</span></a>
+    <div class="nav-section">⚙️ System</div>
+    <a href="admin-settings.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/></svg><span>🔧 Settings</span></a>
+    <div class="nav-spacer"></div>
+    <a href="#" class="nav-item logout" onclick="adminLogout()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/></svg><span>🚪 Logout</span></a>
+  </div>
+</aside>
+
+<div class="main-content">
+  <div class="content-header">
+    <div class="topbar">
+      <h1>👥 User Management</h1>
+      <div class="topbar-actions">
+        <div class="search-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="searchInput" placeholder="Search by name, email or ID..." oninput="filterUsers()" />
+        </div>
+        <button class="refresh-btn" onclick="loadUsers()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+          Refresh
+        </button>
+      </div>
+    </div>
+    <div class="stats-row" id="statsRow">
+      <div class="stat-card"><div class="stat-label">👥 Total Users</div><div class="stat-value" style="color:var(--accent);" id="statTotal">0</div></div>
+      <div class="stat-card"><div class="stat-label">✅ Active</div><div class="stat-value" style="color:var(--success);" id="statActive">0</div></div>
+      <div class="stat-card"><div class="stat-label">💰 Total Invested</div><div class="stat-value" style="color:var(--info);" id="statInvested">$0</div></div>
+      <div class="stat-card"><div class="stat-label">📊 Active Plans</div><div class="stat-value" style="color:var(--warn);" id="statPlans">0</div></div>
+      <div class="stat-card"><div class="stat-label">🔒 Locked</div><div class="stat-value" style="color:var(--error);" id="statLocked">0</div></div>
+      <div class="stat-card"><div class="stat-label">⏸️ Paused</div><div class="stat-value" style="color:#f59e0b;" id="statPaused">0</div></div>
+    </div>
+  </div>
+
+  <div class="content-body">
+    <div class="section-card">
+      <div class="section-header">
+        <h3>All Users</h3>
+        <div class="filter-row">
+          <select class="filter-select" id="filterStatus" onchange="filterUsers()">
+            <option value="all">All Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+            <option value="suspended">Suspended</option>
+          </select>
+          <select class="filter-select" id="filterSort" onchange="filterUsers()">
+            <option value="newest">Newest First</option>
+            <option value="oldest">Oldest First</option>
+            <option value="balance_high">Balance: High-Low</option>
+            <option value="balance_low">Balance: Low-High</option>
+            <option value="invested_high">Invested: High-Low</option>
+          </select>
+          <span class="count-badge" id="userCount">0 users</span>
+        </div>
+      </div>
+      <div class="table-scroll" id="usersTable">
+        <div class="loading"><div class="spinner"></div><p>Loading users...</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="userModal"><div class="modal" id="userModalContent"></div></div>
+<div class="modal-overlay" id="confirmOverlay"><div class="confirm-modal" id="confirmContent"></div></div>
+<div id="toast"></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { getFirestore, collection, query, orderBy, getDocs, doc, getDoc, updateDoc, serverTimestamp, increment, where, writeBatch, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = { apiKey: "AIzaSyA4nRl80lwklik6A8RTvE0Py-jNEg8PJ58", authDomain: "nexa-a8cad.firebaseapp.com", projectId: "nexa-a8cad", storageBucket: "nexa-a8cad.firebasestorage.app", messagingSenderId: "324559998149", appId: "1:324559998149:web:e23ddfa3f0c71114eab4ac" };
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  const fmt = n => Math.round(n||0).toLocaleString();
+  const fmtUSD = n => (n||0).toFixed(2);
+  let allUsers = [], allInvestments = [], allDeposits = [];
+  let currentUserDetail = null;
+
+  window.adminLogout = async ()=>{sessionStorage.removeItem('nexa_admin_logged');await signOut(auth);window.location.href='admin-login.html';};
+  function showToast(m,t='success'){const toast=document.getElementById('toast');toast.textContent=m;toast.style.display='block';toast.style.borderColor=t==='success'?'var(--success)':'var(--error)';toast.style.color=t==='success'?'var(--success)':'var(--error)';setTimeout(()=>toast.style.display='none',3000);}
+
+  function getInitials(name){if(!name)return'?';return name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();}
+  function getUserStatus(user){
+    if(user.suspended)return'suspended';
+    if(user.active===false)return'inactive';
+    return'active';
+  }
+
+  async function loadUsers(){
+    document.getElementById('usersTable').innerHTML='<div class="loading"><div class="spinner"></div><p>Loading users...</p></div>';
+    try{
+      const[userSnap,invSnap,depSnap]=await Promise.all([
+        getDocs(query(collection(db,'users'),orderBy('createdAt','desc'))),
+        getDocs(collection(db,'investments')),
+        getDocs(collection(db,'deposits'))
+      ]);
+      allUsers=[];userSnap.forEach(d=>allUsers.push({id:d.id,...d.data()}));
+      allInvestments=[];invSnap.forEach(d=>allInvestments.push({id:d.id,...d.data()}));
+      allDeposits=[];depSnap.forEach(d=>allDeposits.push({id:d.id,...d.data()}));
+      updateStats();filterUsers();
+    }catch(e){document.getElementById('usersTable').innerHTML=`<div class="empty"><p>Error: ${e.message}</p></div>`;}
+  }
+
+  function updateStats(){
+    const total=allUsers.length;
+    const active=allUsers.filter(u=>getUserStatus(u)==='active').length;
+    const totalInvested=allInvestments.reduce((s,i)=>s+(i.amount||0),0);
+    const activePlans=allInvestments.filter(i=>i.status==='active'&&!i.locked&&!i.paused).length;
+    const lockedPlans=allInvestments.filter(i=>i.locked).length;
+    const pausedPlans=allInvestments.filter(i=>i.paused).length;
+    document.getElementById('statTotal').textContent=total;
+    document.getElementById('statActive').textContent=active;
+    document.getElementById('statInvested').textContent='$'+fmtUSD(totalInvested);
+    document.getElementById('statPlans').textContent=activePlans;
+    document.getElementById('statLocked').textContent=lockedPlans;
+    document.getElementById('statPaused').textContent=pausedPlans;
+  }
+
+  window.filterUsers = function(){
+    const search=document.getElementById('searchInput').value.toLowerCase();
+    const statusFilter=document.getElementById('filterStatus').value;
+    const sortBy=document.getElementById('filterSort').value;
+    let filtered=allUsers.filter(u=>{
+      const name=(u.fullName||u.name||'').toLowerCase();
+      const email=(u.email||'').toLowerCase();
+      const uid=(u.id||'').toLowerCase();
+      const matchesSearch=!search||name.includes(search)||email.includes(search)||uid.includes(search);
+      const status=getUserStatus(u);
+      const matchesStatus=statusFilter==='all'||status===statusFilter;
+      return matchesSearch&&matchesStatus;
+    });
+    if(sortBy==='oldest')filtered.reverse();
+    else if(sortBy==='balance_high')filtered.sort((a,b)=>(b.walletBalance||0)-(a.walletBalance||0));
+    else if(sortBy==='balance_low')filtered.sort((a,b)=>(a.walletBalance||0)-(b.walletBalance||0));
+    else if(sortBy==='invested_high')filtered.sort((a,b)=>(b.totalInvested||0)-(a.totalInvested||0));
+    document.getElementById('userCount').textContent=filtered.length+' users';
+    renderUserTable(filtered);
+  };
+
+  function renderUserTable(users){
+    if(!users.length){document.getElementById('usersTable').innerHTML='<div class="empty"><p>No users found</p></div>';return;}
+    let h='<table><thead><tr><th>User</th><th>Deposit W</th><th>Withdraw W</th><th>Invested</th><th>Plans</th><th>Refs</th><th>Status</th><th>Joined</th><th>Actions</th></tr></thead><tbody>';
+    users.forEach(u=>{
+      const userInv=allInvestments.filter(i=>i.userId===u.id);
+      const userDep=allDeposits.filter(d=>d.userId===u.id);
+      const activePlans=userInv.filter(i=>i.status==='active'&&!i.locked&&!i.paused).length;
+      const totalInv=userInv.reduce((s,i)=>s+(i.amount||0),0);
+      const refCount=allUsers.filter(r=>r.referredBy===u.id).length;
+      const status=getUserStatus(u);
+      const date=u.createdAt?.toMillis?new Date(u.createdAt.toMillis()).toLocaleDateString('en-US',{day:'numeric',month:'short',year:'numeric'}):'—';
+      const initials=getInitials(u.fullName||u.name||u.email);
+      const depW = u.depositWallet ?? 0;
+      const withW = u.withdrawalWallet ?? 0;
+      h+=`<tr onclick="openUserDetail('${u.id}')">
+        <td><div class="user-cell"><div class="user-avatar">${initials}</div><div class="user-info"><strong>${u.fullName||u.name||'—'}</strong><small>${u.email||'—'}</small></div></div></td>
+        <td><span class="wallet-chip deposit">💰 $${fmtUSD(depW)}</span></td>
+        <td><span class="wallet-chip withdraw">💸 $${fmtUSD(withW)}</span></td>
+        <td style="font-weight:700;">$${fmtUSD(totalInv)}</td>
+        <td><span class="badge ${activePlans>0?'success':'info'}">${activePlans}</span></td>
+        <td><span class="badge info">${refCount}</span></td>
+        <td><span class="status-dot ${status}"></span>${status}</td>
+        <td style="white-space:nowrap;">${date}</td>
+        <td style="white-space:nowrap;" onclick="event.stopPropagation()">
+          <button class="btn info" onclick="openUserDetail('${u.id}')">📋</button>
+          <button class="btn warn" onclick="openPauseModal('${u.id}')">⏸️</button>
+          <button class="btn ${status==='suspended'?'success':'danger'}" onclick="toggleSuspendUser('${u.id}','${status}')">${status==='suspended'?'🔓':'🔒'}</button>
+        </td></tr>`;
+    });
+    h+='</tbody></table>';
+    document.getElementById('usersTable').innerHTML=h;
+  }
+
+  window.openUserDetail = async function(uid){
+    const user=allUsers.find(u=>u.id===uid);if(!user)return;
+    currentUserDetail=user;
+    const userInv=allInvestments.filter(i=>i.userId===uid);
+    const userDep=allDeposits.filter(d=>d.userId===uid);
+    const downlines=allUsers.filter(u=>u.referredBy===uid);
+    const totalInv=userInv.reduce((s,i)=>s+(i.amount||0),0);
+    const totalEarned=userInv.reduce((s,i)=>s+(i.totalPaidOut||0),0);
+    const totalRefBonus=user.referralEarnings||0;
+    const status=getUserStatus(user);
+    const date=user.createdAt?.toMillis?new Date(user.createdAt.toMillis()).toLocaleDateString('en-US',{day:'numeric',month:'short',year:'numeric'}):'—';
+    const initials=getInitials(user.fullName||user.name||user.email);
+    const depW = user.depositWallet ?? 0;
+    const withW = user.withdrawalWallet ?? 0;
+
+    const modal=document.getElementById('userModalContent');
+    modal.innerHTML=`
+      <div class="modal-header">
+        <h3><div class="user-avatar">${initials}</div> ${user.fullName||user.name||user.email||'Unknown User'}</h3>
+        <button class="modal-close" onclick="closeUserModal()">✕</button>
+      </div>
+      <div class="modal-tabs">
+        <div class="modal-tab active" onclick="switchUserTab('overview',this)">📊 Overview</div>
+        <div class="modal-tab" onclick="switchUserTab('plans',this)">📈 Plans <span class="tab-badge">${userInv.length}</span></div>
+        <div class="modal-tab" onclick="switchUserTab('deposits',this)">💰 Deposits <span class="tab-badge">${userDep.length}</span></div>
+        <div class="modal-tab" onclick="switchUserTab('referrals',this)">👥 Refs <span class="tab-badge">${downlines.length}</span></div>
+        <div class="modal-tab" onclick="switchUserTab('transactions',this)">📋 History</div>
+        <div class="modal-tab" onclick="switchUserTab('actions',this)">⚙️ Actions</div>
+        <div class="modal-tab" onclick="switchUserTab('notes',this)">📝 Notes</div>
+      </div>
+      <div class="modal-body" id="userTabContent"></div>`;
+    document.getElementById('userModal').classList.add('show');
+    renderUserOverview(user,totalInv,totalEarned,totalRefBonus,status,date,userInv,downlines,userDep,depW,withW);
+  };
+
+  window.closeUserModal = ()=>document.getElementById('userModal').classList.remove('show');
+  
+  window.switchUserTab = function(tab,el){
+    document.querySelectorAll('.modal-tab').forEach(t=>t.classList.remove('active'));
+    el.classList.add('active');
+    const u=currentUserDetail;if(!u)return;
+    const userInv=allInvestments.filter(i=>i.userId===u.id);
+    const userDep=allDeposits.filter(d=>d.userId===u.id);
+    const downlines=allUsers.filter(ur=>ur.referredBy===u.id);
+    const totalInv=userInv.reduce((s,i)=>s+(i.amount||0),0);
+    const totalEarned=userInv.reduce((s,i)=>s+(i.totalPaidOut||0),0);
+    const totalRefBonus=u.referralEarnings||0;
+    const depW = u.depositWallet ?? 0;
+    const withW = u.withdrawalWallet ?? 0;
+    if(tab==='overview')renderUserOverview(u,totalInv,totalEarned,totalRefBonus,getUserStatus(u),u.createdAt?.toMillis?new Date(u.createdAt.toMillis()).toLocaleDateString('en-US',{day:'numeric',month:'short',year:'numeric'}):'—',userInv,downlines,userDep,depW,withW);
+    else if(tab==='plans')renderUserPlans(userInv);
+    else if(tab==='deposits')renderUserDeposits(userDep);
+    else if(tab==='referrals')renderUserReferrals(downlines);
+    else if(tab==='transactions')renderUserTransactions(u.id,userInv,userDep);
+    else if(tab==='actions')renderUserActions(u,userInv,depW,withW);
+    else if(tab==='notes')renderUserNotes(u);
+  };
+
+  function renderUserOverview(u,totalInv,totalEarned,totalRefBonus,status,date,userInv,downlines,userDep,depW,withW){
+    const activePlans=userInv.filter(i=>i.status==='active'&&!i.locked&&!i.paused).length;
+    const lockedPlans=userInv.filter(i=>i.locked).length;
+    const pausedPlans=userInv.filter(i=>i.paused).length;
+    const totalW = u.walletBalance ?? (depW + withW);
+    document.getElementById('userTabContent').innerHTML=`
+      <div class="info-grid">
+        <div class="info-item highlight-deposit"><div class="l">💰 Deposit Wallet</div><div class="v" style="color:var(--accent);">$${fmtUSD(depW)}</div></div>
+        <div class="info-item highlight-withdraw"><div class="l">💸 Withdrawal Wallet</div><div class="v" style="color:var(--success);">$${fmtUSD(withW)}</div></div>
+        <div class="info-item"><div class="l">Total Balance</div><div class="v">$${fmtUSD(totalW)}</div></div>
+        <div class="info-item"><div class="l">Email</div><div class="v">${u.email||'—'}</div></div>
+        <div class="info-item"><div class="l">Phone</div><div class="v">${u.phone||'—'}</div></div>
+        <div class="info-item"><div class="l">Status</div><div class="v"><span class="status-dot ${status}"></span>${status}</div></div>
+        <div class="info-item"><div class="l">Total Invested</div><div class="v" style="color:var(--info);">$${fmtUSD(totalInv)}</div></div>
+        <div class="info-item"><div class="l">Total Earned</div><div class="v" style="color:var(--success);">$${fmtUSD(totalEarned)}</div></div>
+        <div class="info-item"><div class="l">Ref Earnings</div><div class="v" style="color:var(--warn);">$${fmtUSD(totalRefBonus)}</div></div>
+        <div class="info-item"><div class="l">Active Plans</div><div class="v">${activePlans}</div></div>
+        <div class="info-item"><div class="l">Locked Plans</div><div class="v" style="color:var(--error);">${lockedPlans}</div></div>
+        <div class="info-item"><div class="l">Paused Plans</div><div class="v" style="color:var(--warn);">${pausedPlans}</div></div>
+        <div class="info-item"><div class="l">Deposits</div><div class="v">${userDep.length}</div></div>
+        <div class="info-item"><div class="l">Referrals</div><div class="v">${downlines.length}</div></div>
+        <div class="info-item"><div class="l">Registered</div><div class="v">${date}</div></div>
+        <div class="info-item"><div class="l">Referred By</div><div class="v">${u.referredBy?u.referredBy.substring(0,8)+'...':'—'}</div></div>
+        <div class="info-item"><div class="l">User ID</div><div class="v" style="font-size:0.6rem;font-family:monospace;">${u.id}</div></div>
+      </div>`;
+  }
+
+  function renderUserPlans(userInv){
+    if(!userInv.length){document.getElementById('userTabContent').innerHTML='<div class="empty"><p>No investments yet</p></div>';return;}
+    let h='<table class="mini-table"><thead><tr><th>Plan</th><th>Amount</th><th>Daily</th><th>Progress</th><th>Days</th><th>Earned</th><th>Status</th><th>Actions</th></tr></thead><tbody>';
+    userInv.forEach(i=>{
+      const pct=Math.min(100,Math.round(((i.daysPaid||0)/(i.days||20))*100));
+      const statusClass=i.paused?'paused':i.locked?'locked':i.status==='completed'?'completed':'running';
+      const statusText=i.paused?'⏸ Paused':i.locked?'🔒 Locked':i.status==='completed'?'✅ Done':'▶ Running';
+      h+=`<tr>
+        <td style="font-weight:700;">${i.planName||'Plan'}</td><td>$${fmtUSD(i.amount)}</td><td>$${fmtUSD(i.daily)}</td>
+        <td><div class="progress-mini"><div class="progress-mini-fill" style="width:${pct}%"></div></div><small>${i.daysPaid||0}/${i.days||20}</small></td>
+        <td>Day ${i.daysPaid||0}</td><td style="color:var(--success);">$${fmtUSD(i.totalPaidOut||0)}</td>
+        <td><span class="status-pill ${statusClass}">${statusText}</span></td>
+        <td style="white-space:nowrap;">
+          ${i.paused?`<button class="btn success" onclick="resumePlan('${i.id}')">▶</button>`:`<button class="btn warn" onclick="pausePlan('${i.id}')">⏸</button>`}
+        </td></tr>`;
+    });
+    h+='</tbody></table>';
+    document.getElementById('userTabContent').innerHTML=h;
+  }
+
+  function renderUserDeposits(userDep){
+    if(!userDep.length){document.getElementById('userTabContent').innerHTML='<div class="empty"><p>No deposits yet</p></div>';return;}
+    let h='<table class="mini-table"><thead><tr><th>Date</th><th>Amount</th><th>Currency</th><th>Method</th><th>Receipt</th><th>Status</th></tr></thead><tbody>';
+    userDep.sort((a,b)=>(b.createdAt?.toMillis?.()||0)-(a.createdAt?.toMillis?.()||0)).forEach(d=>{
+      const ci=d.currency||(d.method==='ngn'?'NGN':'USDT');
+      const isNGN=ci==='NGN';
+      const dt=d.createdAt?.toMillis?new Date(d.createdAt.toMillis()).toLocaleDateString('en-US',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'—';
+      const hasReceipt=d.receiptImage&&d.receiptImage.length>100;
+      h+=`<tr><td style="white-space:nowrap;">${dt}</td>
+        <td style="font-weight:700;color:${isNGN?'#14b8a6':'var(--accent)'};">${d.amountFormatted||(isNGN?'₦'+fmt(d.amount):'$'+fmtUSD(d.amount))}</td>
+        <td><span class="badge ${isNGN?'info':'success'}">${ci}</span></td><td>${d.paymentMethod||d.method||'—'}</td>
+        <td>${hasReceipt?`<a href="${d.receiptImage}" target="_blank" class="btn info">📸</a>`:'—'}</td>
+        <td><span class="status-pill ${d.status==='approved'?'running':d.status==='rejected'?'locked':'paused'}">${d.status}</span></td></tr>`;
+    });
+    h+='</tbody></table>';
+    document.getElementById('userTabContent').innerHTML=h;
+  }
+
+  function renderUserReferrals(downlines){
+    if(!downlines.length){document.getElementById('userTabContent').innerHTML='<div class="empty"><p>No referrals yet</p></div>';return;}
+    let h='<div class="referral-level"><h4><span class="level-badge">Level 1</span> Direct Referrals ('+downlines.length+')</h4>';
+    h+='<table class="mini-table"><thead><tr><th>User</th><th>Email</th><th>Invested</th><th>Active</th><th>Registered</th></tr></thead><tbody>';
+    downlines.forEach(d=>{
+      const dInv=allInvestments.filter(i=>i.userId===d.id);
+      const dTotal=dInv.reduce((s,i)=>s+(i.amount||0),0);
+      const dActive=dInv.filter(i=>i.status==='active').length;
+      const dt=d.createdAt?.toMillis?new Date(d.createdAt.toMillis()).toLocaleDateString('en-US',{day:'numeric',month:'short',year:'numeric'}):'—';
+      h+=`<tr><td style="font-weight:700;">${d.fullName||d.name||'—'}</td><td>${d.email||'—'}</td>
+        <td style="color:var(--info);">$${fmtUSD(dTotal)}</td><td><span class="badge ${dActive>0?'success':'info'}">${dActive}</span></td><td>${dt}</td></tr>`;
+    });
+    h+='</tbody></table></div>';
+    document.getElementById('userTabContent').innerHTML=h;
+  }
+
+  function renderUserTransactions(uid,userInv,userDep){
+    let transactions=[];
+    userInv.forEach(i=>{
+      transactions.push({date:i.createdAt?.toMillis?.()||Date.now(),type:'Plan Purchase',amount:i.amount,desc:`${i.planName} Plan`,color:'var(--accent)',sign:'-'});
+      if(i.totalPaidOut>0)transactions.push({date:i.lastPayoutDate?.toMillis?.()||Date.now(),type:'ROI Payout',amount:i.totalPaidOut,desc:`From ${i.planName}`,color:'var(--success)',sign:'+'});
+    });
+    userDep.forEach(d=>{transactions.push({date:d.createdAt?.toMillis?.()||Date.now(),type:'Deposit',amount:d.amount,desc:`${d.currency||'USDT'} (${d.status})`,color:d.status==='approved'?'var(--success)':'var(--warn)',sign:'+'});});
+    transactions.sort((a,b)=>b.date-a.date);
+    if(!transactions.length){document.getElementById('userTabContent').innerHTML='<div class="empty"><p>No transactions yet</p></div>';return;}
+    let h='<table class="mini-table"><thead><tr><th>Date</th><th>Type</th><th>Amount</th><th>Description</th></tr></thead><tbody>';
+    transactions.forEach(t=>{
+      h+=`<tr><td style="white-space:nowrap;">${new Date(t.date).toLocaleDateString('en-US',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</td>
+        <td style="color:${t.color};font-weight:700;">${t.type}</td>
+        <td style="font-weight:700;color:${t.sign==='+'?'var(--success)':'var(--error)'};">${t.sign}$${fmtUSD(t.amount)}</td><td>${t.desc}</td></tr>`;
+    });
+    h+='</tbody></table>';
+    document.getElementById('userTabContent').innerHTML=h;
+  }
+
+  function renderUserActions(u,userInv,depW,withW){
+    const activePlans=userInv.filter(i=>i.status==='active'&&!i.locked&&!i.paused);
+    document.getElementById('userTabContent').innerHTML=`
+      <div class="action-row">
+        <div class="action-card"><div class="action-title">💰 Fund Deposit Wallet</div>
+          <div class="action-btns">
+            <input type="number" id="fundDepAmount" placeholder="Amount" style="width:90px;background:var(--input-bg);border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text);font-family:inherit;font-size:0.75rem;" />
+            <input type="text" id="fundDepReason" placeholder="Reason" style="width:110px;background:var(--input-bg);border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text);font-family:inherit;font-size:0.75rem;" />
+            <button class="btn success" onclick="fundWallet('${u.id}','deposit')">Credit 💰</button>
+          </div>
+          <small style="color:var(--muted);">Current: $${fmtUSD(depW)}</small>
+        </div>
+        <div class="action-card"><div class="action-title">💸 Fund Withdrawal Wallet</div>
+          <div class="action-btns">
+            <input type="number" id="fundWithAmount" placeholder="Amount" style="width:90px;background:var(--input-bg);border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text);font-family:inherit;font-size:0.75rem;" />
+            <input type="text" id="fundWithReason" placeholder="Reason" style="width:110px;background:var(--input-bg);border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text);font-family:inherit;font-size:0.75rem;" />
+            <button class="btn success" onclick="fundWallet('${u.id}','withdrawal')">Credit 💸</button>
+          </div>
+          <small style="color:var(--muted);">Current: $${fmtUSD(withW)}</small>
+        </div>
+      </div>
+      <div class="action-row">
+        <div class="action-card"><div class="action-title">➖ Debit Wallet</div>
+          <div class="action-btns">
+            <select id="debitWallet" style="background:var(--input-bg);border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text);font-family:inherit;font-size:0.75rem;">
+              <option value="deposit">💰 Deposit Wallet</option>
+              <option value="withdrawal">💸 Withdrawal Wallet</option>
+            </select>
+            <input type="number" id="debitAmount" placeholder="Amount" style="width:90px;background:var(--input-bg);border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text);font-family:inherit;font-size:0.75rem;" />
+            <input type="text" id="debitReason" placeholder="Reason" style="width:110px;background:var(--input-bg);border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text);font-family:inherit;font-size:0.75rem;" />
+            <button class="btn danger" onclick="debitWallet('${u.id}')">Debit</button>
+          </div>
+        </div>
+        <div class="action-card"><div class="action-title">⏸️ Plan Control</div>
+          <div class="action-btns">
+            ${activePlans.map(p=>`<button class="btn warn" onclick="pausePlan('${p.id}')">⏸ ${p.planName}</button>`).join('')||'<span style="font-size:0.7rem;color:var(--muted);">No active plans</span>'}
+            ${userInv.filter(i=>i.paused).map(p=>`<button class="btn success" onclick="resumePlan('${p.id}')">▶ ${p.planName}</button>`).join('')}
+          </div>
+        </div>
+      </div>
+      <div class="action-row">
+        <div class="action-card"><div class="action-title">🔒 Account Control</div>
+          <div class="action-btns">
+            <button class="btn ${getUserStatus(u)==='suspended'?'success':'danger'}" onclick="toggleSuspendUser('${u.id}','${getUserStatus(u)}')">${getUserStatus(u)==='suspended'?'🔓 Unsuspend':'🔒 Suspend'}</button>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function renderUserNotes(u){
+    const notes=u.adminNotes||[];
+    document.getElementById('userTabContent').innerHTML=`
+      <div class="notes-list">${notes.length?notes.map(n=>`<div class="note-item"><div class="note-header"><span class="note-author">${n.author||'Admin'}</span><span class="note-date">${n.date?new Date(n.date).toLocaleString():'—'}</span></div><div class="note-text">${n.text}</div></div>`).join(''):'<div class="empty"><p>No notes yet</p></div>'}</div>
+      <div class="add-note"><input type="text" id="noteInput" placeholder="Add a private note..." /><button class="btn primary" onclick="addNote('${u.id}')">Add Note</button></div>`;
+  }
+
+  // ── ACTIONS ──
+  window.pausePlan = async function(planId){
+    if(!confirm('Pause this plan?'))return;
+    try{await updateDoc(doc(db,'investments',planId),{paused:true,pausedAt:serverTimestamp()});showToast('⏸️ Plan paused!','success');loadUsers();closeUserModal();}
+    catch(e){showToast('Error: '+e.message,'error');}
+  };
+
+  window.resumePlan = async function(planId){
+    if(!confirm('Resume this plan?'))return;
+    try{
+      const now=new Date();const np=new Date(now);np.setHours(24,0,0,0);
+      await updateDoc(doc(db,'investments',planId),{paused:false,pausedAt:null,resumedAt:serverTimestamp(),nextPayoutAt:np,status:'active'});
+      showToast('▶️ Plan resumed!','success');loadUsers();closeUserModal();
+    }catch(e){showToast('Error: '+e.message,'error');}
+  };
+
+  window.toggleSuspendUser = async function(uid,status){
+    const isSuspended=status==='suspended';
+    if(!confirm(isSuspended?'Unsuspend?':'Suspend?'))return;
+    try{await updateDoc(doc(db,'users',uid),{suspended:!isSuspended});showToast(isSuspended?'🔓 Unsuspended!':'🔒 Suspended!','success');loadUsers();closeUserModal();}
+    catch(e){showToast('Error: '+e.message,'error');}
+  };
+
+  // ════════════ FUND WALLET (Choose which wallet) ════════════
+  window.fundWallet = async function(uid, wallet){
+    const amtId = wallet === 'deposit' ? 'fundDepAmount' : 'fundWithAmount';
+    const reasonId = wallet === 'deposit' ? 'fundDepReason' : 'fundWithReason';
+    const amt=parseFloat(document.getElementById(amtId)?.value||0);
+    const reason=document.getElementById(reasonId)?.value||'Admin credit';
+    if(!amt||amt<=0){showToast('Enter a valid amount','error');return;}
+    const walletLabel = wallet === 'deposit' ? 'Deposit Wallet' : 'Withdrawal Wallet';
+    if(!confirm(`Credit $${fmtUSD(amt)} to ${walletLabel}?`))return;
+    try{
+      const updateData = { walletBalance: increment(amt) };
+      if(wallet==='deposit') updateData.depositWallet = increment(amt);
+      else updateData.withdrawalWallet = increment(amt);
+      await updateDoc(doc(db,'users',uid), updateData);
+      await addDoc(collection(db,'adminLogs'),{userId:uid,action:`fund_${wallet}`,amount:amt,reason,targetWallet:wallet,adminId:auth.currentUser?.uid,createdAt:serverTimestamp()});
+      showToast(`✅ $${fmtUSD(amt)} credited to ${walletLabel}!`,'success');loadUsers();closeUserModal();
+    }catch(e){showToast('Error: '+e.message,'error');}
+  };
+
+  // ════════════ DEBIT WALLET (Choose which wallet) ════════════
+  window.debitWallet = async function(uid){
+    const wallet = document.getElementById('debitWallet')?.value || 'deposit';
+    const amt=parseFloat(document.getElementById('debitAmount')?.value||0);
+    const reason=document.getElementById('debitReason')?.value||'Admin debit';
+    if(!amt||amt<=0){showToast('Enter a valid amount','error');return;}
+    const walletLabel = wallet === 'deposit' ? 'Deposit Wallet' : 'Withdrawal Wallet';
+    if(!confirm(`Debit $${fmtUSD(amt)} from ${walletLabel}?`))return;
+    try{
+      const snap=await getDoc(doc(db,'users',uid));
+      const data=snap.data()||{};
+      const bal = wallet === 'deposit' ? (data.depositWallet||0) : (data.withdrawalWallet||0);
+      if(bal<amt){showToast(`Insufficient balance in ${walletLabel} ($${fmtUSD(bal)})`,'error');return;}
+      const updateData = { walletBalance: increment(-amt) };
+      if(wallet==='deposit') updateData.depositWallet = increment(-amt);
+      else updateData.withdrawalWallet = increment(-amt);
+      await updateDoc(doc(db,'users',uid), updateData);
+      await addDoc(collection(db,'adminLogs'),{userId:uid,action:`debit_${wallet}`,amount:amt,reason,targetWallet:wallet,adminId:auth.currentUser?.uid,createdAt:serverTimestamp()});
+      showToast(`💸 $${fmtUSD(amt)} debited from ${walletLabel}!`,'success');loadUsers();closeUserModal();
+    }catch(e){showToast('Error: '+e.message,'error');}
+  };
+
+  window.addNote = async function(uid){
+    const text=document.getElementById('noteInput')?.value?.trim();
+    if(!text)return;
+    try{
+      const snap=await getDoc(doc(db,'users',uid));
+      const notes=snap.data()?.adminNotes||[];
+      notes.push({text,author:'Admin',date:Date.now()});
+      await updateDoc(doc(db,'users',uid),{adminNotes:notes});
+      showToast('📝 Note added!','success');
+      currentUserDetail.adminNotes=notes;
+      renderUserNotes(currentUserDetail);
+    }catch(e){showToast('Error: '+e.message,'error');}
+  };
+
+  window.openPauseModal = function(uid){
+    const userInv=allInvestments.filter(i=>i.userId===uid&&i.status==='active'&&!i.locked&&!i.paused);
+    const pausedInv=allInvestments.filter(i=>i.userId===uid&&i.paused);
+    let opts=userInv.map(p=>`<button class="btn warn" style="display:block;width:100%;margin:4px 0;" onclick="pausePlan('${p.id}');closeConfirmModal();">⏸ Pause ${p.planName} (Day ${p.daysPaid||0})</button>`).join('');
+    opts+=pausedInv.map(p=>`<button class="btn success" style="display:block;width:100%;margin:4px 0;" onclick="resumePlan('${p.id}');closeConfirmModal();">▶ Resume ${p.planName} (Day ${p.daysPaid||0})</button>`).join('');
+    if(!opts)opts='<p style="color:var(--muted);">No plans to pause/resume</p>';
+    document.getElementById('confirmContent').innerHTML=`<h3>⏸️ Plan Control</h3>${opts}<div class="confirm-actions" style="margin-top:12px;"><button class="btn info" onclick="closeConfirmModal()" style="flex:1;">Close</button></div>`;
+    document.getElementById('confirmOverlay').classList.add('show');
+  };
+
+  window.closeConfirmModal = ()=>document.getElementById('confirmOverlay').classList.remove('show');
+
+  onAuthStateChanged(auth,async u=>{if(!u||!sessionStorage.getItem('nexa_admin_logged')){window.location.href='admin-login.html';return;}loadUsers();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeUserModal();closeConfirmModal();}});
+</script>
+</body>
+</html>
