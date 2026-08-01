@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<title>Nexa – Savings Plans</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  :root{
+    --bg:#f4f3fa; --card:#ffffff;
+    --primary:#5c3df4; --primary-dark:#4528d4; --primary-soft:#ede9ff;
+    --accent:#a78bfa; --accent-gold:#f59e0b; --text:#1a1533; --muted:#7b7694;
+    --border:#e3e0f5; --input-bg:#f8f7ff;
+    --dark-card:linear-gradient(135deg,#1e1445 0%,#3b1fa8 100%);
+    --shadow:0 8px 32px -8px rgba(92,61,244,0.18);
+    --success:#16a34a; --error:#dc2626; --warn:#d97706;
+    --naira-green:#0d9488; --naira-light:#ccfbf1;
+  }
+  body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:100px;
+    background-image:radial-gradient(ellipse at 30% 20%,rgba(13,148,136,0.04) 0%,transparent 50%);
+  }
+
+  .topbar{background:rgba(255,255,255,0.95);backdrop-filter:blur(10px);padding:16px 18px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;}
+  .back-btn{width:38px;height:38px;border-radius:50%;background:var(--input-bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;text-decoration:none;color:var(--text);flex-shrink:0;transition:all 0.2s;}
+  .back-btn:hover{background:var(--primary-soft);}
+  .back-btn svg{width:18px;height:18px;}
+  .topbar h1{font-size:1.05rem;font-weight:800;}
+  .topbar p{font-size:0.75rem;color:var(--muted);}
+
+  main{padding:16px;display:flex;flex-direction:column;gap:16px;max-width:480px;margin:0 auto;}
+
+  /* WALLET */
+  .wallet-card{background:linear-gradient(135deg,#0d9488 0%,#14b8a6 100%);border-radius:18px;padding:18px;color:#fff;position:relative;overflow:hidden;border:2px solid rgba(255,255,255,0.2);}
+  .wallet-card::before{content:'';position:absolute;top:-30px;right:-30px;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,0.06);}
+  .wallet-card .wc-top{display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1;}
+  .wallet-card .wc-label{font-size:0.7rem;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;}
+  .wallet-card .wc-amount{font-size:1.8rem;font-weight:800;position:relative;z-index:1;}
+  .wallet-card .wc-sub{font-size:0.7rem;color:rgba(255,255,255,0.6);margin-top:2px;position:relative;z-index:1;}
+  .wc-deposit-btn{background:var(--accent-gold);color:#1e1445;border:none;padding:8px 14px;border-radius:50px;font-family:inherit;font-size:0.72rem;font-weight:700;cursor:pointer;text-decoration:none;position:relative;z-index:1;transition:all 0.2s;}
+  .wc-deposit-btn:hover{box-shadow:0 4px 12px rgba(245,158,11,0.3);}
+
+  /* TABS */
+  .tabs{display:flex;background:var(--input-bg);border:1px solid var(--border);border-radius:14px;padding:4px;}
+  .tab{flex:1;text-align:center;padding:10px 6px;font-size:0.82rem;font-weight:700;color:var(--muted);border-radius:11px;cursor:pointer;transition:.15s;}
+  .tab.active{background:var(--naira-green);color:#fff;box-shadow:0 4px 12px rgba(13,148,136,0.3);}
+
+  .section-title{font-size:0.95rem;font-weight:800;margin-bottom:2px;color:var(--text);}
+  .section-sub{font-size:0.76rem;color:var(--muted);margin-bottom:10px;}
+
+  /* PLANS GRID */
+  .plans-grid{display:flex;flex-direction:column;gap:12px;}
+  .plan-card{background:var(--card);border:2px solid var(--border);border-radius:18px;overflow:hidden;transition:all 0.2s;}
+  .plan-card:hover{border-color:var(--naira-green);box-shadow:0 4px 16px rgba(13,148,136,0.1);}
+  .plan-card.featured{border-color:var(--accent-gold);}
+  .plan-head{background:linear-gradient(135deg,#0d9488,#14b8a6);padding:16px 18px;display:flex;align-items:center;justify-content:space-between;color:#fff;}
+  .plan-head.featured-head{background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#1e1445;}
+  .plan-head-left{display:flex;align-items:center;gap:10px;}
+  .plan-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;}
+  .plan-icon.green{background:rgba(255,255,255,0.2);}
+  .plan-icon.gold{background:rgba(0,0,0,0.1);}
+  .plan-head h3{font-size:0.95rem;font-weight:800;}
+  .plan-head .sub{font-size:0.7rem;opacity:0.8;margin-top:1px;}
+  .plan-badge{font-size:0.62rem;font-weight:700;padding:5px 10px;border-radius:50px;white-space:nowrap;}
+  .plan-badge.green{background:rgba(255,255,255,0.25);color:#fff;}
+  .plan-badge.gold{background:rgba(0,0,0,0.15);color:#1e1445;}
+
+  .plan-body{padding:14px 16px;}
+  .plan-detail-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;font-size:0.78rem;border-bottom:1px dashed var(--border);}
+  .plan-detail-row:last-child{border-bottom:none;}
+  .plan-detail-row .l{color:var(--muted);display:flex;align-items:center;gap:6px;}
+  .plan-detail-row .l svg{width:13px;height:13px;color:var(--naira-green);flex-shrink:0;}
+  .plan-detail-row .v{font-weight:700;color:var(--text);}
+  .plan-detail-row .v.highlight{color:var(--success);}
+  .plan-detail-row .v.amount{color:var(--naira-green);font-size:0.9rem;}
+
+  .btn-invest{width:100%;margin-top:10px;padding:12px;background:var(--naira-green);color:#fff;font-family:inherit;font-size:0.88rem;font-weight:700;border:none;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.2s;}
+  .btn-invest:hover{background:#0f766e;transform:translateY(-1px);}
+  .btn-invest.featured-btn{background:var(--accent-gold);color:#1e1445;}
+  .btn-invest.featured-btn:hover{background:#fbbf24;}
+  .btn-invest svg{width:16px;height:16px;}
+
+  /* ACTIVE SAVINGS */
+  .active-card{background:var(--card);border:2px solid var(--naira-green);border-radius:18px;overflow:hidden;}
+  .active-head{padding:14px 16px;display:flex;align-items:center;justify-content:space-between;background:var(--naira-light);border-bottom:1px solid #99f6e4;}
+  .active-head h3{font-size:0.88rem;font-weight:700;color:#0f766e;display:flex;align-items:center;gap:8px;}
+  .status-badge{font-size:0.62rem;font-weight:700;padding:4px 10px;border-radius:50px;}
+  .status-badge.locked{background:#fef3c7;color:#92400e;}
+  .status-badge.completed{background:#dcfce7;color:#16a34a;}
+  .status-badge.matured{background:#dbeafe;color:#2563eb;}
+  .active-body{padding:14px 16px;}
+  .active-row{display:flex;justify-content:space-between;font-size:0.76rem;color:var(--muted);margin-bottom:4px;}
+  .active-row b{color:var(--text);}
+  .active-row .green{color:var(--success);font-weight:700;}
+  .progress-bar{height:6px;background:var(--input-bg);border-radius:50px;overflow:hidden;margin:10px 0;}
+  .progress-fill{height:100%;border-radius:50px;background:var(--naira-green);transition:width 0.3s;}
+  .maturity-box{background:var(--dark-card);border-radius:12px;padding:14px;text-align:center;color:#fff;margin-top:8px;}
+  .maturity-box .mat-label{font-size:0.68rem;color:rgba(255,255,255,0.6);margin-bottom:4px;}
+  .maturity-box .mat-date{font-size:1.2rem;font-weight:800;}
+  .maturity-box .mat-amount{font-size:0.78rem;color:rgba(255,255,255,0.7);margin-top:4px;}
+
+  .empty-state{text-align:center;padding:40px 20px;color:var(--muted);}
+  .empty-state svg{width:40px;height:40px;color:var(--border);margin-bottom:10px;}
+
+  /* MODAL */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(20,12,50,0.7);backdrop-filter:blur(6px);z-index:100;align-items:center;justify-content:center;padding:20px;}
+  .modal-overlay.show{display:flex;}
+  .modal{background:var(--card);border-radius:24px;padding:24px 20px;max-width:380px;width:100%;box-shadow:0 20px 60px rgba(92,61,244,0.3);animation:modalIn .3s ease;max-height:85vh;overflow-y:auto;}
+  @keyframes modalIn{from{opacity:0;transform:scale(.9) translateY(16px)}to{opacity:1;transform:scale(1) translateY(0)}}
+  .modal-icon{width:60px;height:60px;border-radius:50%;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;}
+  .modal-icon.success{background:#dcfce7;} .modal-icon.error{background:#fee2e2;} .modal-icon.info{background:var(--primary-soft);}
+  .modal-icon svg{width:28px;height:28px;}
+  .modal h3{font-size:1.1rem;font-weight:800;margin-bottom:6px;text-align:center;}
+  .modal p{font-size:0.85rem;color:var(--muted);line-height:1.5;margin-bottom:16px;text-align:center;}
+
+  .confirm-row{display:flex;justify-content:space-between;background:var(--input-bg);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:6px;font-size:0.82rem;}
+  .confirm-row .l{color:var(--muted);}
+  .confirm-row .v{font-weight:700;color:var(--text);}
+  .confirm-row .v.green{color:var(--success);}
+  .confirm-highlight{background:var(--naira-light);border-color:#99f6e4;border-radius:12px;padding:12px 14px;text-align:center;margin-bottom:10px;}
+  .confirm-highlight .big-amount{font-size:1.4rem;font-weight:800;color:#0f766e;}
+  .confirm-highlight .lbl{font-size:0.68rem;color:var(--muted);margin-top:2px;}
+
+  .modal-actions{display:flex;gap:8px;margin-top:12px;}
+  .modal-btn{flex:1;padding:12px;border:none;border-radius:12px;font-family:inherit;font-size:0.88rem;font-weight:700;cursor:pointer;transition:all 0.2s;text-align:center;}
+  .modal-btn.primary{background:var(--naira-green);color:#fff;}
+  .modal-btn.primary:hover{background:#0f766e;}
+  .modal-btn.ghost{background:var(--input-bg);color:var(--muted);border:1.5px solid var(--border);}
+  .spinner{width:18px;height:18px;border:2.5px solid rgba(255,255,255,0.35);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;display:none;margin:0 auto;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .bottom-nav{position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,0.95);backdrop-filter:blur(10px);border-top:1px solid var(--border);display:flex;z-index:30;padding:8px 4px calc(8px + env(safe-area-inset-bottom));}
+  .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;text-decoration:none;color:var(--muted);padding:6px 0;}
+  .nav-item svg{width:22px;height:22px;}
+  .nav-item span{font-size:0.7rem;font-weight:600;}
+  .nav-item.active{color:var(--primary);}
+  .nav-item.active .nav-icon-wrap{background:var(--primary);border-radius:10px;width:38px;height:30px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(92,61,244,0.3);}
+  .nav-item.active .nav-icon-wrap svg{color:#fff;width:18px;height:18px;}
+  .nav-icon-wrap{display:flex;align-items:center;justify-content:center;height:30px;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="naira-hub.html" class="back-btn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><polyline points="15 18 9 12 15 6"/></svg>
+  </a>
+  <div>
+    <h1>Savings Plans</h1>
+    <p>Lock funds & earn up to 100% interest</p>
+  </div>
+</div>
+
+<main>
+
+  <!-- Naira Wallet -->
+  <div class="wallet-card">
+    <div class="wc-top">
+      <div>
+        <div class="wc-label">💵 Naira Wallet Balance</div>
+        <div class="wc-amount">₦<span id="nairaWallet">0</span></div>
+      </div>
+      <a href="naira-deposit.html" class="wc-deposit-btn">+ Deposit</a>
+    </div>
+    <div class="wc-sub">Fund your wallet to activate savings plans</div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active" id="tabPlans" onclick="switchTab('plans')">💰 All Plans</div>
+    <div class="tab" id="tabActive" onclick="switchTab('active')">📊 My Savings</div>
+  </div>
+
+  <div id="plansView"></div>
+  <div id="activeView" style="display:none;"></div>
+
+</main>
+
+<nav class="bottom-nav">
+  <a href="dashboard.html" class="nav-item"><div class="nav-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div><span>Home</span></a>
+  <a href="investment.html" class="nav-item"><div class="nav-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg></div><span>Orders</span></a>
+  <a href="history.html" class="nav-item"><div class="nav-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><span>History</span></a>
+  <a href="profile.html" class="nav-item"><div class="nav-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><span>Account</span></a>
+</nav>
+
+<!-- CONFIRM MODAL -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal" id="confirmContent"></div>
+</div>
+
+<!-- RESULT MODAL -->
+<div class="modal-overlay" id="resultModal">
+  <div class="modal" style="text-align:center;">
+    <div class="modal-icon" id="resultIcon"></div>
+    <h3 id="resultTitle"></h3>
+    <p id="resultMsg"></p>
+    <button class="modal-btn primary" onclick="closeResultModal()">OK</button>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { getFirestore, doc, getDoc, updateDoc, collection, addDoc, query, where, getDocs, serverTimestamp, runTransaction, increment } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyA4nRl80lwklik6A8RTvE0Py-jNEg8PJ58", authDomain: "nexa-a8cad.firebaseapp.com", projectId: "nexa-a8cad",
+    storageBucket: "nexa-a8cad.firebasestorage.app", messagingSenderId: "324559998149", appId: "1:324559998149:web:e23ddfa3f0c71114eab4ac"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  const SAVINGS_PLANS = [
+    { id:'s1', name:'1 Month', months:1, rate:0.10, minAmount:20000, icon:'📅', color:'green' },
+    { id:'s3', name:'3 Months', months:3, rate:0.30, minAmount:20000, icon:'📆', color:'green' },
+    { id:'s6', name:'6 Months', months:6, rate:0.50, minAmount:20000, icon:'📊', color:'green' },
+    { id:'s12', name:'1 Year', months:12, rate:1.00, minAmount:20000, icon:'🏆', color:'gold', featured:true }
+  ];
+
+  const SAVINGS_AMOUNTS = [20000, 50000, 100000, 200000, 300000, 400000, 500000];
+
+  const ICONS = {
+    success:`<svg viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`,
+    error:`<svg viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
+    info:`<svg viewBox="0 0 24 24" fill="none" stroke="#5c3df4" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`
+  };
+
+  const fmt = n => Math.round(n||0).toLocaleString();
+  let currentUser = null, nairaWallet = 0, activeSavings = [], selectedPlan = null, selectedAmount = 0;
+
+  window.showResult = (type, title, msg) => {
+    document.getElementById('resultIcon').className = 'modal-icon '+type;
+    document.getElementById('resultIcon').innerHTML = ICONS[type];
+    document.getElementById('resultTitle').textContent = title;
+    document.getElementById('resultMsg').textContent = msg;
+    document.getElementById('resultModal').classList.add('show');
+  };
+  window.closeResultModal = () => document.getElementById('resultModal').classList.remove('show');
+  window.closeConfirm = () => document.getElementById('confirmModal').classList.remove('show');
+
+  window.switchTab = (t) => {
+    document.getElementById('tabPlans').classList.toggle('active', t==='plans');
+    document.getElementById('tabActive').classList.toggle('active', t==='active');
+    document.getElementById('plansView').style.display = t==='plans'?'flex':'none';
+    document.getElementById('activeView').style.display = t==='active'?'flex':'none';
+    if (t==='active') renderActiveSavings();
+  };
+
+  // ✅ Check for matured savings and auto-credit
+  async function checkMaturedSavings() {
+    if (!currentUser) return;
+    try {
+      const snap = await getDocs(query(collection(db, 'nairaSavings'), where('userId', '==', currentUser.uid), where('status', '==', 'active')));
+      for (const d of snap.docs) {
+        const s = d.data();
+        const maturityDate = s.maturityDate?.toMillis?.() || s.maturityDate;
+        if (maturityDate && Date.now() >= maturityDate) {
+          const totalReturn = s.amount + (s.amount * s.rate);
+          await runTransaction(db, async (tx) => {
+            tx.update(doc(db, 'nairaSavings', d.id), { status: 'matured', maturedAt: serverTimestamp() });
+            tx.update(doc(db, 'users', currentUser.uid), {
+              withdrawalWallet: increment(totalReturn / 1500), // Convert to USD
+              walletBalance: increment(totalReturn / 1500)
+            });
+          });
+        }
+      }
+    } catch(e) {}
+  }
+
+  function renderPlans() {
+    document.getElementById('plansView').innerHTML = `
+      <p class="section-title">Select a Savings Plan</p>
+      <p class="section-sub">Lock your Naira and earn guaranteed interest. Funds are locked until maturity.</p>
+      <div class="plans-grid">
+        ${SAVINGS_PLANS.map(p => `
+          <div class="plan-card ${p.featured?'featured':''}">
+            <div class="plan-head ${p.featured?'featured-head':''}">
+              <div class="plan-head-left">
+                <div class="plan-icon ${p.color}">${p.icon}</div>
+                <div><h3>${p.name} Plan</h3><div class="sub">${p.months} month${p.months>1?'s':''} savings</div></div>
+              </div>
+              <span class="plan-badge ${p.color}">+${Math.round(p.rate*100)}%</span>
+            </div>
+            <div class="plan-body">
+              <div class="plan-detail-row"><span class="l"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Interest Rate</span><span class="v highlight">${Math.round(p.rate*100)}%</span></div>
+              <div class="plan-detail-row"><span class="l"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Duration</span><span class="v">${p.months} month${p.months>1?'s':''}</span></div>
+              <div class="plan-detail-row"><span class="l"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/></svg>Min Amount</span><span class="v">₦${fmt(p.minAmount)}</span></div>
+              <div class="plan-detail-row"><span class="l"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/></svg>Lock Period</span><span class="v">Full ${p.months} month${p.months>1?'s':''}</span></div>
+              <div class="plan-detail-row"><span class="l"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="13" rx="2"/></svg>Payout</span><span class="v">Auto-credit on maturity</span></div>
+              ${p.featured?`<div class="plan-detail-row"><span class="l">⭐ Best Value</span><span class="v highlight">Double your money!</span></div>`:''}
+              <button class="btn-invest ${p.featured?'featured-btn':''}" onclick="openSavingsConfirm('${p.id}')">
+                Start ${p.name} Plan
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+              </button>
+            </div>
+          </div>
+        `).join('')}
+      </div>`;
+  }
+
+  window.openSavingsConfirm = (planId) => {
+    selectedPlan = SAVINGS_PLANS.find(p => p.id === planId);
+    if (!selectedPlan) return;
+
+    document.getElementById('confirmContent').innerHTML = `
+      <h3 style="margin-bottom:12px;">🔒 Activate ${selectedPlan.name} Savings</h3>
+      <p class="section-sub" style="text-align:center;">Select amount to lock for ${selectedPlan.months} month${selectedPlan.months>1?'s':''}</p>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;">
+        ${SAVINGS_AMOUNTS.filter(a => a >= selectedPlan.minAmount).map(a => `
+          <div style="background:var(--input-bg);border:2px solid var(--border);border-radius:10px;padding:10px 4px;text-align:center;cursor:pointer;font-size:0.75rem;font-weight:700;" 
+               data-amt="${a}" onclick="selectSavingsAmount(${a}, this)">₦${fmt(a)}</div>
+        `).join('')}
+      </div>
+      <div style="position:relative;margin-bottom:10px;">
+        <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--naira-green);font-weight:700;">₦</span>
+        <input type="number" id="customSavingsAmount" placeholder="Custom amount (min ₦${fmt(selectedPlan.minAmount)})" min="${selectedPlan.minAmount}" step="1000" 
+               style="width:100%;height:46px;background:var(--input-bg);border:2px solid var(--border);border-radius:12px;padding:0 14px 0 28px;font-family:inherit;font-size:0.9rem;color:var(--text);outline:none;"
+               oninput="selectSavingsAmount(parseInt(this.value)||0, null)" />
+      </div>
+      <div class="confirm-highlight" id="savingsPreview" style="display:none;">
+        <div class="lbl">You'll receive on maturity</div>
+        <div class="big-amount" id="savingsReturn">₦0</div>
+        <div class="lbl" style="margin-top:4px;">Interest: <span id="savingsInterest" style="color:var(--success);font-weight:700;">₦0</span></div>
+      </div>
+      <div class="confirm-row"><span class="l">Plan</span><span class="v">${selectedPlan.name} (${selectedPlan.months} month${selectedPlan.months>1?'s':''})</span></div>
+      <div class="confirm-row"><span class="l">Interest Rate</span><span class="v green">${Math.round(selectedPlan.rate*100)}%</span></div>
+      <div class="confirm-row"><span class="l">Wallet Balance</span><span class="v">₦${fmt(nairaWallet)}</span></div>
+      <div class="modal-actions">
+        <button class="modal-btn ghost" onclick="closeConfirm()">Cancel</button>
+        <button class="modal-btn primary" id="confirmSavingsBtn" onclick="activateSavings()" disabled>Lock Funds</button>
+      </div>`;
+    document.getElementById('confirmModal').classList.add('show');
+    selectedAmount = 0;
+  };
+
+  window.selectSavingsAmount = (amt, el) => {
+    selectedAmount = amt;
+    if (el) {
+      document.querySelectorAll('#confirmContent [data-amt]').forEach(c => c.style.borderColor = 'var(--border)');
+      el.style.borderColor = 'var(--naira-green)';
+    }
+    const preview = document.getElementById('savingsPreview');
+    const btn = document.getElementById('confirmSavingsBtn');
+    if (amt >= (selectedPlan?.minAmount || 20000)) {
+      const interest = Math.round(amt * selectedPlan.rate);
+      document.getElementById('savingsReturn').textContent = '₦' + fmt(amt + interest);
+      document.getElementById('savingsInterest').textContent = '₦' + fmt(interest);
+      preview.style.display = 'block';
+      btn.disabled = false;
+    } else {
+      preview.style.display = 'none';
+      btn.disabled = true;
+    }
+  };
+
+  window.activateSavings = async () => {
+    if (!selectedPlan || selectedAmount < selectedPlan.minAmount) return;
+    if (selectedAmount > nairaWallet) {
+      showResult('error', 'Insufficient Balance', `You need ₦${fmt(selectedAmount)} but your wallet has ₦${fmt(nairaWallet)}.`);
+      return;
+    }
+
+    try {
+      const maturityDate = new Date();
+      maturityDate.setMonth(maturityDate.getMonth() + selectedPlan.months);
+
+      await runTransaction(db, async (tx) => {
+        const snap = await tx.get(doc(db, 'users', currentUser.uid));
+        const bal = snap.data().nairaWallet || 0;
+        if (bal < selectedAmount) throw new Error('INSUFFICIENT');
+        tx.update(doc(db, 'users', currentUser.uid), { nairaWallet: bal - selectedAmount });
+      });
+
+      await addDoc(collection(db, 'nairaSavings'), {
+        userId: currentUser.uid, userEmail: currentUser.email || '',
+        planId: selectedPlan.id, planName: selectedPlan.name,
+        amount: selectedAmount, rate: selectedPlan.rate, months: selectedPlan.months,
+        totalReturn: selectedAmount + Math.round(selectedAmount * selectedPlan.rate),
+        status: 'active', maturityDate,
+        createdAt: serverTimestamp()
+      });
+
+      nairaWallet -= selectedAmount;
+      document.getElementById('nairaWallet').textContent = fmt(nairaWallet);
+      closeConfirm();
+      showResult('success', 'Savings Activated! 🔒', `₦${fmt(selectedAmount)} locked for ${selectedPlan.months} month${selectedPlan.months>1?'s':''}. You'll receive ₦${fmt(selectedAmount + Math.round(selectedAmount * selectedPlan.rate))} on ${maturityDate.toLocaleDateString('en-NG', {day:'numeric', month:'short', year:'numeric'})}.`);
+      await loadActiveSavings();
+    } catch(e) {
+      showResult('error', 'Failed', e.message === 'INSUFFICIENT' ? 'Balance changed.' : 'Something went wrong.');
+    }
+  };
+
+  async function loadActiveSavings() {
+    const snap = await getDocs(query(collection(db, 'nairaSavings'), where('userId', '==', currentUser.uid)));
+    activeSavings = [];
+    snap.forEach(d => activeSavings.push({ id: d.id, ...d.data() }));
+    activeSavings.sort((a, b) => (a.createdAt?.toMillis?.() || 0) - (b.createdAt?.toMillis?.() || 0));
+  }
+
+  function renderActiveSavings() {
+    if (!activeSavings.length) {
+      document.getElementById('activeView').innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg><p>No active savings yet.<br>Pick a plan to get started.</p></div>`;
+      return;
+    }
+    document.getElementById('activeView').innerHTML = activeSavings.map(s => {
+      const maturity = s.maturityDate?.toMillis ? new Date(s.maturityDate.toMillis()) : new Date(s.maturityDate);
+      const now = Date.now();
+      const totalMs = maturity.getTime() - (s.createdAt?.toMillis?.() || now);
+      const elapsedMs = now - (s.createdAt?.toMillis?.() || now);
+      const pct = Math.min(100, Math.max(0, Math.round((elapsedMs / totalMs) * 100)));
+      const isMatured = s.status === 'matured';
+      const remaining = Math.max(0, maturity.getTime() - now);
+      const daysLeft = Math.ceil(remaining / 86400000);
+
+      return `
+        <div class="active-card">
+          <div class="active-head">
+            <h3>💰 ${s.planName} Savings</h3>
+            <span class="status-badge ${isMatured ? 'matured' : 'locked'}">${isMatured ? '✅ Matured' : '🔒 Locked'}</span>
+          </div>
+          <div class="active-body">
+            <div class="active-row"><span>Amount Locked</span><b>₦${fmt(s.amount)}</b></div>
+            <div class="active-row"><span>Interest Rate</span><b class="green">${Math.round(s.rate*100)}%</b></div>
+            <div class="active-row"><span>Total Return</span><b class="green">₦${fmt(s.totalReturn)}</b></div>
+            <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+            <div class="active-row"><span>Progress</span><b>${pct}%</b></div>
+            <div class="maturity-box">
+              <div class="mat-label">${isMatured ? '✅ Credited to Withdrawal Wallet' : '🔒 Unlocks on'}</div>
+              <div class="mat-date">${maturity.toLocaleDateString('en-NG', {day:'numeric', month:'short', year:'numeric'})}</div>
+              <div class="mat-amount">${isMatured ? '₦' + fmt(s.totalReturn) + ' sent to Withdrawal Wallet' : daysLeft + ' days remaining'}</div>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) { window.location.href = 'login.html'; return; }
+    currentUser = user;
+    try {
+      const snap = await getDoc(doc(db, 'users', user.uid));
+      if (snap.exists()) {
+        nairaWallet = snap.data().nairaWallet || 0;
+        document.getElementById('nairaWallet').textContent = fmt(nairaWallet);
+      }
+    } catch(e) {}
+    await checkMaturedSavings();
+    await loadActiveSavings();
+    renderPlans();
+    renderActiveSavings();
+  });
+</script>
+</body>
+</html>
