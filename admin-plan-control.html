@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<title>Nexa Admin – Lock/Unlock Plans</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  :root{
+    --bg:#0f0a1e;--card:#1a1333;--sidebar:#120c24;--primary:#7c3aed;--primary-dark:#6d28d9;
+    --primary-soft:#2d1b69;--accent:#a78bfa;--text:#f5f3ff;--muted:#9d94b8;--border:#2d1f5e;
+    --input-bg:#1e1644;--error:#ef4444;--success:#22c55e;--warn:#f59e0b;--info:#3b82f6;
+    --sidebar-width:250px;
+  }
+  html,body{height:100%;overflow:hidden;}
+  body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);display:flex;}
+
+  .sidebar{width:var(--sidebar-width);min-width:var(--sidebar-width);background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:30;overflow-y:auto;padding:16px 0;}
+  .sidebar-inner{padding:0 14px;display:flex;flex-direction:column;flex:1;}
+  .sidebar .logo{display:flex;align-items:center;gap:10px;margin-bottom:24px;text-decoration:none;}
+  .logo-icon{width:40px;height:40px;border-radius:12px;background:var(--primary);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(124,58,237,0.4);}
+  .logo-icon svg{width:20px;height:20px;color:#fff;}
+  .sidebar .logo span{font-size:1.1rem;font-weight:800;color:var(--text);}
+  .sidebar .logo em{color:var(--accent);font-style:normal;}
+  .nav-section{font-size:0.6rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;padding:14px 6px 8px;}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:11px;color:var(--muted);text-decoration:none;font-size:0.84rem;font-weight:600;margin-bottom:2px;transition:all 0.15s;}
+  .nav-item:hover{background:var(--primary-soft);color:var(--text);}
+  .nav-item.active{background:var(--warn);color:#000;box-shadow:0 4px 12px rgba(245,158,11,0.3);}
+  .nav-item svg{width:18px;height:18px;}
+  .nav-spacer{flex:1;}
+  .nav-item.logout{color:var(--error);margin-top:8px;}
+
+  .main-content{flex:1;margin-left:var(--sidebar-width);display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+  .content-header{padding:20px 24px 0;flex-shrink:0;}
+  .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px;}
+  .topbar h1{font-size:1.4rem;font-weight:800;}
+
+  .search-section{display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap;}
+  .search-box{position:relative;flex:1;min-width:250px;max-width:400px;}
+  .search-box input{width:100%;height:44px;background:var(--input-bg);border:2px solid var(--border);border-radius:10px;padding:0 14px 0 40px;font-family:inherit;font-size:0.85rem;color:var(--text);outline:none;transition:all 0.2s;}
+  .search-box input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(124,58,237,0.15);}
+  .search-box svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:18px;height:18px;color:var(--muted);}
+
+  .btn{font-size:0.78rem;font-weight:700;padding:10px 16px;border-radius:10px;border:none;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px;transition:all 0.2s;white-space:nowrap;}
+  .btn.primary{background:var(--primary);color:#fff;}
+  .btn.primary:hover{background:var(--primary-dark);}
+  .btn.success{background:var(--success);color:#fff;}
+  .btn.success:hover{background:#15803d;}
+  .btn.warn{background:var(--warn);color:#000;}
+  .btn.warn:hover{background:#d97706;}
+  .btn.danger{background:var(--error);color:#fff;}
+  .btn.danger:hover{background:#b91c1c;}
+  .btn.info{background:rgba(59,130,246,0.2);color:var(--info);}
+  .btn svg{width:15px;height:15px;}
+  .btn:disabled{opacity:0.5;cursor:not-allowed;}
+
+  .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
+  .stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;}
+  .stat-card .v{font-size:1.2rem;font-weight:800;}
+  .stat-card .l{font-size:0.62rem;color:var(--muted);text-transform:uppercase;margin-top:2px;}
+
+  .content-body{flex:1;overflow:hidden;padding:0 24px 20px;}
+  .section-card{background:var(--card);border:1px solid var(--border);border-radius:16px;display:flex;flex-direction:column;height:100%;overflow:hidden;}
+  .section-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-shrink:0;}
+  .section-header h3{font-size:0.95rem;font-weight:700;}
+
+  .table-scroll{flex:1;overflow:auto;}
+  table{width:100%;border-collapse:collapse;min-width:850px;}
+  table thead{position:sticky;top:0;z-index:2;}
+  table th{font-size:0.6rem;font-weight:700;color:var(--muted);text-transform:uppercase;padding:10px 8px;text-align:left;background:var(--input-bg);white-space:nowrap;border-bottom:1px solid var(--border);}
+  table td{font-size:0.72rem;padding:8px;border-bottom:1px solid var(--border);vertical-align:middle;}
+  table tbody tr:hover{background:rgba(124,58,237,0.04);}
+  table tbody tr.locked-row{background:rgba(239,68,68,0.04);}
+  table tbody tr.unlocked-row{background:rgba(34,197,94,0.03);}
+
+  .badge{font-size:0.55rem;font-weight:700;padding:3px 7px;border-radius:50px;display:inline-block;white-space:nowrap;}
+  .badge.success{background:rgba(34,197,94,0.2);color:var(--success);}
+  .badge.error{background:rgba(239,68,68,0.2);color:var(--error);}
+  .badge.warn{background:rgba(245,158,11,0.2);color:var(--warn);}
+  .badge.info{background:rgba(59,130,246,0.2);color:var(--info);}
+  .badge.completed{background:rgba(13,148,136,0.2);color:#14b8a6;}
+  .badge.paused{background:rgba(245,158,11,0.2);color:var(--warn);}
+
+  .progress-mini{height:5px;background:var(--input-bg);border-radius:50px;overflow:hidden;margin-top:3px;width:100%;}
+  .progress-mini-fill{height:100%;border-radius:50px;transition:width 0.3s;}
+
+  .user-info-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+  .user-info-left{display:flex;align-items:center;gap:12px;}
+  .user-avatar{width:44px;height:44px;border-radius:50%;background:var(--primary-soft);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem;color:var(--accent);}
+  .user-info h4{font-size:0.9rem;font-weight:700;}
+  .user-info span{font-size:0.7rem;color:var(--muted);}
+
+  .toggle-switch{position:relative;width:44px;height:24px;display:inline-block;cursor:pointer;}
+  .toggle-switch input{opacity:0;width:0;height:0;}
+  .toggle-slider{position:absolute;top:0;left:0;right:0;bottom:0;background:var(--input-bg);border:1px solid var(--border);border-radius:24px;transition:0.3s;}
+  .toggle-slider:before{content:'';position:absolute;height:18px;width:18px;left:2px;bottom:2px;background:var(--muted);border-radius:50%;transition:0.3s;}
+  .toggle-switch input:checked+.toggle-slider{background:rgba(34,197,94,0.2);border-color:var(--success);}
+  .toggle-switch input:checked+.toggle-slider:before{background:var(--success);transform:translateX(20px);}
+
+  .loading{text-align:center;padding:40px;}
+  .spinner{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .6s linear infinite;margin:0 auto 10px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .empty{text-align:center;padding:40px;color:var(--muted);}
+
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);backdrop-filter:blur(6px);z-index:100;align-items:center;justify-content:center;padding:20px;}
+  .modal-overlay.show{display:flex;}
+  .modal{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:20px 24px;max-width:420px;width:100%;text-align:center;animation:modalIn .25s ease;}
+  @keyframes modalIn{from{opacity:0;transform:scale(.95) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+  .modal h3{font-size:1.05rem;font-weight:800;margin-bottom:8px;}
+  .modal p{font-size:0.85rem;color:var(--muted);margin-bottom:16px;line-height:1.5;}
+  .modal-actions{display:flex;gap:8px;}
+  .modal-btn{flex:1;padding:11px;border:none;border-radius:10px;font-family:inherit;font-size:0.82rem;font-weight:700;cursor:pointer;transition:all 0.15s;}
+  .modal-btn.ghost{background:var(--input-bg);color:var(--muted);border:1px solid var(--border);}
+  .modal-btn.success{background:var(--success);color:#fff;}
+  .modal-btn.danger{background:var(--error);color:#fff;}
+
+  #toast{display:none;position:fixed;top:16px;right:16px;z-index:300;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 18px;font-size:0.82rem;font-weight:700;box-shadow:0 8px 30px rgba(0,0,0,0.5);animation:slideIn .3s ease;max-width:320px;}
+  @keyframes slideIn{from{opacity:0;transform:translateX(50px)}to{opacity:1;transform:translateX(0)}}
+
+  @media(max-width:900px){:root{--sidebar-width:60px;}.sidebar{padding:12px 0;}.sidebar-inner{padding:0 8px;}.sidebar .logo span,.nav-item span,.nav-section{display:none;}.nav-item{justify-content:center;padding:12px;}.logo-icon{width:36px;height:36px;}.content-header{padding:14px 14px 0;}.content-body{padding:0 14px 14px;}}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-inner">
+    <a class="logo" href="admin-dashboard.html"><div class="logo-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div><span>Nex<em>a</em> Admin</span></a>
+    <div class="nav-section">📊 Main</div>
+    <a href="admin-dashboard.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg><span>Dashboard</span></a>
+    <div class="nav-section">🔧 Plan Control</div>
+    <a href="admin-plan-control.html" class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg><span>🔒 Lock/Unlock</span></a>
+    <a href="admin-unlock-all.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>🔓 Unlock All</span></a>
+    <div class="nav-spacer"></div>
+    <a href="#" class="nav-item logout" onclick="adminLogout()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/></svg><span>Logout</span></a>
+  </div>
+</aside>
+
+<div class="main-content">
+  <div class="content-header">
+    <div class="topbar"><h1>🔒 Plan Lock/Unlock Control</h1></div>
+
+    <div class="search-section">
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="searchInput" placeholder="Search by email or user ID..." onkeydown="if(event.key==='Enter')searchUser()" />
+      </div>
+      <button class="btn primary" onclick="searchUser()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Search</button>
+      <button class="btn info" onclick="scanAllUsers()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/></svg>Scan All</button>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card"><div class="v" id="statTotal">0</div><div class="l">Total Plans</div></div>
+      <div class="stat-card"><div class="v" style="color:var(--success);" id="statActive">0</div><div class="l">Active/Unlocked</div></div>
+      <div class="stat-card"><div class="v" style="color:var(--error);" id="statLocked">0</div><div class="l">Locked Plans</div></div>
+      <div class="stat-card"><div class="v" style="color:var(--info);" id="statPaused">0</div><div class="l">Paused Plans</div></div>
+    </div>
+  </div>
+
+  <div class="content-body">
+    <div class="section-card">
+      <div class="section-header"><h3 id="tableTitle">User Plans</h3></div>
+      <div class="table-scroll" id="tableContent">
+        <div class="empty"><p>🔍 Search for a user by <strong>email</strong> or <strong>user ID</strong></p><p style="font-size:0.75rem;margin-top:4px;color:var(--muted);">You can lock, unlock, pause, or resume any plan</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal">
+    <h3 id="confirmTitle">Confirm Action</h3>
+    <p id="confirmMsg"></p>
+    <div class="modal-actions">
+      <button class="modal-btn ghost" onclick="closeConfirmModal()">Cancel</button>
+      <button class="modal-btn success" id="confirmBtn" onclick="executeAction()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { getFirestore, collection, getDocs, query, where, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = { apiKey: "AIzaSyA4nRl80lwklik6A8RTvE0Py-jNEg8PJ58", authDomain: "nexa-a8cad.firebaseapp.com", projectId: "nexa-a8cad", storageBucket: "nexa-a8cad.firebasestorage.app", messagingSenderId: "324559998149", appId: "1:324559998149:web:e23ddfa3f0c71114eab4ac" };
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  const fmt = n => Math.round(n||0).toLocaleString();
+  let currentUserPlans = [], currentUserData = null, pendingAction = null;
+
+  window.adminLogout = async () => { sessionStorage.removeItem('nexa_admin_logged'); await signOut(auth); window.location.href = 'admin-login.html'; };
+  function showToast(m,t='success'){const toast=document.getElementById('toast');toast.textContent=m;toast.style.display='block';toast.style.borderColor=t==='success'?'var(--success)':'var(--error)';toast.style.color=t==='success'?'var(--success)':'var(--error)';setTimeout(()=>toast.style.display='none',3000);}
+
+  window.closeConfirmModal = () => { document.getElementById('confirmModal').classList.remove('show'); pendingAction = null; };
+
+  // ✅ SEARCH USER
+  window.searchUser = async () => {
+    const term = document.getElementById('searchInput').value.trim().toLowerCase();
+    if (!term) { showToast('Enter email or user ID', 'warn'); return; }
+    document.getElementById('tableContent').innerHTML = '<div class="loading"><div class="spinner"></div><p>Searching...</p></div>';
+    currentUserPlans = []; currentUserData = null;
+
+    try {
+      const userSnap = await getDocs(collection(db, 'users'));
+      let foundUser = null;
+      userSnap.forEach(d => {
+        const u = d.data();
+        const email = (u.email || '').toLowerCase();
+        const uid = (d.id || '').toLowerCase();
+        if (email.includes(term) || uid.includes(term) || uid === term) foundUser = { id: d.id, ...u };
+      });
+
+      if (!foundUser) {
+        document.getElementById('tableContent').innerHTML = '<div class="empty"><p>❌ No user found matching: <strong>' + term + '</strong></p></div>';
+        document.getElementById('tableTitle').textContent = 'User Not Found';
+        resetStats();
+        return;
+      }
+
+      currentUserData = foundUser;
+      document.getElementById('tableTitle').textContent = 'Plans: ' + (foundUser.email || foundUser.id);
+
+      const invSnap = await getDocs(query(collection(db, 'investments'), where('userId', '==', foundUser.id)));
+      currentUserPlans = [];
+      invSnap.forEach(d => currentUserPlans.push({ id: d.id, ...d.data() }));
+      currentUserPlans.sort((a, b) => (a.createdAt?.toMillis?.() || 0) - (b.createdAt?.toMillis?.() || 0));
+
+      updateStats();
+      renderPlans();
+    } catch (e) {
+      document.getElementById('tableContent').innerHTML = `<div class="empty"><p>Error: ${e.message}</p></div>`;
+    }
+  };
+
+  function resetStats() {
+    document.getElementById('statTotal').textContent = '0';
+    document.getElementById('statActive').textContent = '0';
+    document.getElementById('statLocked').textContent = '0';
+    document.getElementById('statPaused').textContent = '0';
+  }
+
+  function updateStats() {
+    document.getElementById('statTotal').textContent = fmt(currentUserPlans.length);
+    document.getElementById('statActive').textContent = fmt(currentUserPlans.filter(p => p.status === 'active' && !p.locked && !p.paused).length);
+    document.getElementById('statLocked').textContent = fmt(currentUserPlans.filter(p => p.locked).length);
+    document.getElementById('statPaused').textContent = fmt(currentUserPlans.filter(p => p.paused).length);
+  }
+
+  function renderPlans() {
+    if (!currentUserPlans.length) {
+      document.getElementById('tableContent').innerHTML = '<div class="empty"><p>No investment plans found for this user.</p></div>';
+      return;
+    }
+
+    let html = `<div class="user-info-card">
+      <div class="user-info-left">
+        <div class="user-avatar">${(currentUserData.email||'U').charAt(0).toUpperCase()}</div>
+        <div class="user-info"><h4>${currentUserData.email||'Unknown'}</h4><span>ID: ${currentUserData.id.substring(0,12)}...</span></div>
+      </div>
+    </div>`;
+
+    html += `<table><thead><tr>
+      <th>#</th><th>Plan</th><th>Amount</th><th>Daily</th><th>Progress</th><th>Earned</th><th>Status</th><th>Lock Control</th><th>Pause Control</th>
+    </tr></thead><tbody>`;
+
+    currentUserPlans.forEach((plan, i) => {
+      const daysPaid = plan.daysPaid || 0;
+      const maxDays = plan.days || 20;
+      const pct = Math.min(100, Math.round((daysPaid / maxDays) * 100));
+      const isLocked = plan.locked === true;
+      const isPaused = plan.paused === true;
+      const isCompleted = plan.status === 'completed' || daysPaid >= maxDays;
+      const purchaseDate = plan.createdAt?.toMillis ? new Date(plan.createdAt.toMillis()).toLocaleDateString('en-US', { day:'numeric', month:'short', year:'numeric' }) : '—';
+
+      let statusBadge = '';
+      if (isCompleted) statusBadge = '<span class="badge completed">✅ Done</span>';
+      else if (isPaused) statusBadge = '<span class="badge paused">⏸ Paused</span>';
+      else if (isLocked) statusBadge = '<span class="badge error">🔒 Locked</span>';
+      else if (plan.status === 'active') statusBadge = '<span class="badge success">▶ Running</span>';
+      else statusBadge = `<span class="badge">${plan.status}</span>`;
+
+      const rowClass = isLocked ? 'locked-row' : (plan.status === 'active' && !isPaused ? 'unlocked-row' : '');
+
+      html += `<tr class="${rowClass}">
+        <td>${i + 1}</td>
+        <td><strong>${plan.planName || 'Plan'}</strong><br><small style="color:var(--muted);">${purchaseDate}</small></td>
+        <td style="font-weight:700;">$${fmt(plan.amount || 0, 2)}</td>
+        <td>$${fmt(plan.daily || 0, 2)}</td>
+        <td>
+          <div class="progress-mini"><div class="progress-mini-fill" style="width:${pct}%;background:${isLocked?'var(--error)':isPaused?'var(--warn)':'var(--primary)'};"></div></div>
+          <small>Day ${daysPaid}/${maxDays}</small>
+        </td>
+        <td style="color:var(--success);">$${fmt(plan.totalPaidOut || 0, 2)}</td>
+        <td>${statusBadge}</td>
+        <td>
+          ${isCompleted ? '<span style="color:var(--muted);font-size:0.65rem;">Completed</span>' : `
+            <label class="toggle-switch" onclick="toggleLock('${plan.id}', ${isLocked}, '${plan.planName}', ${daysPaid})">
+              <input type="checkbox" ${isLocked ? 'checked' : ''} />
+              <span class="toggle-slider"></span>
+            </label>
+            <small style="display:block;margin-top:2px;font-size:0.55rem;color:${isLocked?'var(--error)':'var(--success)'};">${isLocked ? '🔒 Locked' : '🔓 Unlocked'}</small>
+          `}
+        </td>
+        <td>
+          ${isCompleted ? '<span style="color:var(--muted);font-size:0.65rem;">—</span>' : isLocked ? '<span style="color:var(--muted);font-size:0.65rem;">Unlock first</span>' : `
+            <button class="btn ${isPaused ? 'success' : 'warn'}" onclick="togglePause('${plan.id}', ${isPaused}, '${plan.planName}')" style="font-size:0.6rem;padding:4px 8px;">
+              ${isPaused ? '▶ Resume' : '⏸ Pause'}
+            </button>
+          `}
+        </td>
+      </tr>`;
+    });
+
+    html += '</tbody></table>';
+    document.getElementById('tableContent').innerHTML = html;
+  }
+
+  // ✅ TOGGLE LOCK/UNLOCK
+  window.toggleLock = (planId, isCurrentlyLocked, planName, daysPaid) => {
+    const action = isCurrentlyLocked ? 'UNLOCK' : 'LOCK';
+    const msg = isCurrentlyLocked 
+      ? `Unlock "${planName}" (Day ${daysPaid})? It will resume earning from tonight.`
+      : `Lock "${planName}" (Day ${daysPaid})? It will stop earning until unlocked.`;
+    
+    document.getElementById('confirmTitle').textContent = action + ' Plan?';
+    document.getElementById('confirmMsg').textContent = msg;
+    document.getElementById('confirmBtn').textContent = isCurrentlyLocked ? '🔓 Unlock Plan' : '🔒 Lock Plan';
+    document.getElementById('confirmBtn').className = 'modal-btn ' + (isCurrentlyLocked ? 'success' : 'danger');
+    pendingAction = { planId, action: isCurrentlyLocked ? 'unlock' : 'lock' };
+    document.getElementById('confirmModal').classList.add('show');
+  };
+
+  // ✅ TOGGLE PAUSE/RESUME
+  window.togglePause = (planId, isCurrentlyPaused, planName) => {
+    const action = isCurrentlyPaused ? 'RESUME' : 'PAUSE';
+    const msg = isCurrentlyPaused
+      ? `Resume "${planName}"? It will continue earning from tonight.`
+      : `Pause "${planName}"? ROI drops will stop until resumed.`;
+    
+    document.getElementById('confirmTitle').textContent = action + ' Plan?';
+    document.getElementById('confirmMsg').textContent = msg;
+    document.getElementById('confirmBtn').textContent = isCurrentlyPaused ? '▶ Resume Plan' : '⏸ Pause Plan';
+    document.getElementById('confirmBtn').className = 'modal-btn ' + (isCurrentlyPaused ? 'success' : 'warn');
+    pendingAction = { planId, action: isCurrentlyPaused ? 'resume' : 'pause' };
+    document.getElementById('confirmModal').classList.add('show');
+  };
+
+  // ✅ EXECUTE ACTION
+  window.executeAction = async () => {
+    if (!pendingAction) return;
+    const { planId, action } = pendingAction;
+
+    try {
+      const now = new Date();
+      const nextPayout = new Date(now);
+      nextPayout.setHours(24, 0, 0, 0);
+
+      const updateData = { updatedAt: serverTimestamp(), adminAction: action };
+
+      if (action === 'unlock') {
+        updateData.locked = false;
+        updateData.status = 'active';
+        updateData.nextPayoutAt = nextPayout;
+        updateData.unlockedAt = serverTimestamp();
+      } else if (action === 'lock') {
+        updateData.locked = true;
+        updateData.lockedAt = serverTimestamp();
+      } else if (action === 'pause') {
+        updateData.paused = true;
+        updateData.pausedAt = serverTimestamp();
+      } else if (action === 'resume') {
+        updateData.paused = false;
+        updateData.status = 'active';
+        updateData.nextPayoutAt = nextPayout;
+        updateData.resumedAt = serverTimestamp();
+      }
+
+      await updateDoc(doc(db, 'investments', planId), updateData);
+
+      const labels = { unlock: '🔓 Unlocked!', lock: '🔒 Locked!', pause: '⏸ Paused!', resume: '▶ Resumed!' };
+      showToast(labels[action], 'success');
+      closeConfirmModal();
+      setTimeout(() => searchUser(), 500);
+    } catch (e) { showToast('Error: ' + e.message, 'error'); closeConfirmModal(); }
+  };
+
+  // ✅ SCAN ALL
+  window.scanAllUsers = async () => {
+    document.getElementById('tableContent').innerHTML = '<div class="loading"><div class="spinner"></div><p>Scanning all users with locked/paused plans...</p></div>';
+    try {
+      const [invSnap, userSnap] = await Promise.all([getDocs(collection(db, 'investments')), getDocs(collection(db, 'users'))]);
+      const allUsers = []; userSnap.forEach(d => allUsers.push({ id: d.id, ...d.data() }));
+      
+      const plans = [];
+      invSnap.forEach(d => {
+        const plan = { id: d.id, ...d.data() };
+        if (plan.locked || plan.paused) {
+          const user = allUsers.find(u => u.id === plan.userId);
+          plan._email = user?.email || '—';
+          plans.push(plan);
+        }
+      });
+
+      document.getElementById('tableTitle').textContent = 'All Locked/Paused Plans';
+      resetStats();
+
+      if (!plans.length) {
+        document.getElementById('tableContent').innerHTML = '<div class="empty"><p>✅ No locked or paused plans found!</p></div>';
+        return;
+      }
+
+      let html = `<table><thead><tr><th>User</th><th>Plan</th><th>Progress</th><th>Status</th><th>Lock</th><th>Pause</th></tr></thead><tbody>`;
+      plans.forEach(plan => {
+        const daysPaid = plan.daysPaid || 0;
+        const maxDays = plan.days || 20;
+        const isLocked = plan.locked === true;
+        const isPaused = plan.paused === true;
+        
+        html += `<tr class="${isLocked ? 'locked-row' : ''}">
+          <td><strong>${plan._email}</strong><br><small>${(plan.userId||'').substring(0,8)}</small></td>
+          <td>${plan.planName||'Plan'}</td>
+          <td>Day ${daysPaid}/${maxDays}</td>
+          <td>${isLocked ? '<span class="badge error">🔒 Locked</span>' : '<span class="badge paused">⏸ Paused</span>'}</td>
+          <td>${isLocked ? `<button class="btn success" onclick="toggleLock('${plan.id}', true, '${plan.planName}', ${daysPaid})" style="font-size:0.6rem;padding:4px 8px;">🔓</button>` : '—'}</td>
+          <td>${isPaused ? `<button class="btn success" onclick="togglePause('${plan.id}', true, '${plan.planName}')" style="font-size:0.6rem;padding:4px 8px;">▶</button>` : '—'}</td>
+        </tr>`;
+      });
+      html += '</tbody></table>';
+      document.getElementById('tableContent').innerHTML = html;
+    } catch (e) {
+      document.getElementById('tableContent').innerHTML = `<div class="empty"><p>Error: ${e.message}</p></div>`;
+    }
+  };
+
+  onAuthStateChanged(auth, u => {
+    if (!u || !sessionStorage.getItem('nexa_admin_logged')) { window.location.href = 'admin-login.html'; return; }
+  });
+</script>
+</body>
+</html>
