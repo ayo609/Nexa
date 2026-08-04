@@ -196,18 +196,33 @@
   </div>
 
   <!-- QUICK ACTIONS -->
-  <div class="quick-grid">
-    <a href="admin-deposits.html" class="quick-card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M12 18V6"/></svg><span>💰 Deposits</span></a>
-    <a href="admin-withdrawals.html" class="quick-card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12V8H6a2 2 0 010-4h12v4"/></svg><span>💸 Withdrawals</span></a>
-    <a href="admin-investments.html" class="quick-card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/></svg><span>📦 Investments</span></a>
-    <a href="admin-naira-management.html" class="quick-card naira-card" style="position:relative;">
-      <span class="new-badge">NEW</span>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg><span>💵 Naira Hub</span></a>
-    <a href="admin-management.html" class="quick-card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><span>👥 Users</span></a>
-  </div>
-</div>
+  
+<div class="quick-grid">
+  <a href="admin-deposits.html" class="quick-card">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M12 18V6"/></svg><span>💰 Deposits</span></a>
+  
+  <a href="admin-withdrawals.html" class="quick-card">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12V8H6a2 2 0 010-4h12v4"/></svg><span>💸 Withdrawals</span></a>
+  
+  <a href="admin-investments.html" class="quick-card">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/></svg><span>📦 Investments</span></a>
 
-<div id="toast" class="toast"></div>
+  <!-- ✅ NEW: Unlock Plans Fix Tool -->
+  <a href="admin-unlock-all.html" class="quick-card" style="position:relative; border-color: rgba(34,197,94,0.3);">
+    <span class="new-badge" style="background: var(--success);">FIX</span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" style="width:24px;height:24px;">
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+      <path d="M7 11V7a5 5 0 0110 0v4"/>
+    </svg>
+    <span style="color: var(--success);">🔓 Unlock Plans</span></a>
+
+  <a href="admin-naira-management.html" class="quick-card naira-card" style="position:relative;">
+    <span class="new-badge">NEW</span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg><span>💵 Naira Hub</span></a>
+
+  <a href="admin-management.html" class="quick-card">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><span>👥 Users</span></a>
+</div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
