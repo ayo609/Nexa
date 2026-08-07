@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<title>Nexa – Bulk ROI Fix</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  :root{
+    --bg:#0f0f1a; --card:#1a1a2e; --card2:#16213e;
+    --primary:#5c3df4; --accent:#a78bfa; --text:#e2e8f0; --muted:#94a3b8;
+    --border:#2d2d44; --input-bg:#1e1e38;
+    --success:#16a34a; --error:#dc2626; --warn:#d97706;
+  }
+  body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:16px;}
+
+  .header{background:var(--card);border-radius:16px;padding:20px;margin-bottom:16px;border:1px solid var(--border);text-align:center;}
+  .header h1{font-size:1.3rem;font-weight:800;color:var(--accent);}
+  .header p{font-size:0.8rem;color:var(--muted);margin-top:4px;}
+
+  .btn{width:100%;height:50px;background:var(--primary);color:#fff;font-family:inherit;font-size:0.95rem;font-weight:700;border:none;border-radius:12px;cursor:pointer;margin-bottom:10px;}
+  .btn.warn{background:var(--warn);}
+  .btn.success{background:var(--success);}
+  .btn.danger{background:var(--error);}
+  .btn:disabled{opacity:0.5;cursor:not-allowed;}
+
+  .stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;}
+  .stat-box{background:var(--card);border-radius:12px;padding:14px;text-align:center;border:1px solid var(--border);}
+  .stat-box .sv{font-size:1.3rem;font-weight:800;color:var(--accent);}
+  .stat-box .sl{font-size:0.65rem;color:var(--muted);text-transform:uppercase;margin-top:2px;}
+
+  .results{background:var(--card);border-radius:16px;padding:16px;border:1px solid var(--border);max-height:500px;overflow-y:auto;}
+  .results h3{font-size:0.9rem;font-weight:700;margin-bottom:12px;color:var(--accent);}
+  .user-row{background:var(--card2);border-radius:10px;padding:12px;margin-bottom:8px;border:1px solid var(--border);font-size:0.8rem;}
+  .user-row .ur-top{display:flex;justify-content:space-between;font-weight:700;margin-bottom:4px;}
+  .user-row .ur-info{color:var(--muted);font-size:0.72rem;}
+  .user-row .ur-info span{color:var(--text);}
+  .user-row .ur-missing{color:var(--error);font-weight:700;margin-top:4px;}
+
+  .progress-bar{height:6px;background:var(--border);border-radius:50px;margin:10px 0;overflow:hidden;}
+  .progress-fill{height:100%;background:var(--success);border-radius:50px;transition:width .3s;}
+
+  .log-box{background:#000;border-radius:10px;padding:12px;font-family:monospace;font-size:0.7rem;color:#6ee7b7;max-height:200px;overflow-y:auto;margin-top:10px;display:none;}
+  .log-box.show{display:block;}
+  .log-box .log-line{margin-bottom:2px;}
+  .log-box .log-line.err{color:#fca5a5;}
+  .log-box .log-line.warn{color:#fbbf24;}
+
+  .spinner{width:24px;height:24px;border:3px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;display:none;margin:10px auto;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .loading{text-align:center;padding:20px;display:none;}
+  .loading.show{display:block;}
+  .loading .spinner{display:block;}
+  .loading p{margin-top:8px;color:var(--muted);font-size:0.85rem;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🔧 Bulk ROI Verification & Fix</h1>
+  <p>Scan all users · Calculate missing ROI · Fix everything</p>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-box"><div class="sv" id="statUsers">0</div><div class="sl">Users Scanned</div></div>
+  <div class="stat-box"><div class="sv" id="statInvest">0</div><div class="sl">Investments</div></div>
+  <div class="stat-box"><div class="sv" id="statMissing">$0.00</div><div class="sl">Total Missing ROI</div></div>
+</div>
+
+<button class="btn" id="btnScan" onclick="scanAllUsers()">🔍 Step 1: Scan All Users & Calculate Missing ROI</button>
+<button class="btn success" id="btnFix" onclick="fixAllUsers()" disabled>💸 Step 2: Credit ALL Missing ROI to All Users</button>
+<button class="btn warn" id="btnFixOne" onclick="searchAndFix()">🔍 Search & Fix Single User</button>
+
+<div style="display:flex;gap:8px;margin-bottom:10px;">
+  <input type="text" id="singleEmail" placeholder="Enter user email..." style="flex:1;height:44px;background:var(--input-bg);border:2px solid var(--border);border-radius:10px;padding:0 12px;font-family:inherit;font-size:0.9rem;color:var(--text);outline:none;">
+</div>
+
+<div class="progress-bar"><div class="progress-fill" id="progressBar" style="width:0%"></div></div>
+
+<div class="loading" id="loadingBox"><div class="spinner"></div><p id="loadingText">Scanning...</p></div>
+
+<div class="log-box" id="logBox"></div>
+
+<div class="results" id="resultsBox" style="display:none;">
+  <h3>📋 Users with Missing ROI</h3>
+  <div id="resultsList"></div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const fc = { apiKey:"AIzaSyA4nRl80lwklik6A8RTvE0Py-jNEg8PJ58", authDomain:"nexa-a8cad.firebaseapp.com", projectId:"nexa-a8cad", storageBucket:"nexa-a8cad.firebasestorage.app", messagingSenderId:"324559998149", appId:"1:324559998149:web:e23ddfa3f0c71114eab4ac" };
+  const app = initializeApp(fc);
+  const db = getFirestore(app);
+
+  const fu = n => (Number(n)||0).toFixed(2);
+  const ff = n => Math.round(Number(n)||0).toLocaleString();
+
+  let allUserData = []; // { uid, email, investments: [], totalMissing: 0 }
+  let grandTotalMissing = 0;
+
+  function getTimestampMs(ts) {
+    if (!ts) return 0;
+    if (ts.toMillis) return ts.toMillis();
+    if (ts.seconds) return ts.seconds * 1000;
+    if (ts instanceof Date) return ts.getTime();
+    return typeof ts === 'number' ? ts : 0;
+  }
+
+  function calculateExpectedPayouts(createdAtMs, maxDays) {
+    const now = Date.now();
+    const d = new Date(createdAtMs);
+    d.setHours(0,0,0,0);
+    let count = 0, check = new Date(d);
+    check.setDate(check.getDate() + 1);
+    check.setHours(0,0,0,0);
+    while (check.getTime() <= now && count < maxDays) {
+      if (check.getDay() >= 1 && check.getDay() <= 5) count++;
+      check.setDate(check.getDate() + 1);
+    }
+    return count;
+  }
+
+  function log(msg, type) {
+    const box = document.getElementById('logBox');
+    box.classList.add('show');
+    box.innerHTML += `<div class="log-line ${type||''}">[${new Date().toLocaleTimeString()}] ${msg}</div>`;
+    box.scrollTop = box.scrollHeight;
+  }
+
+  function setLoading(show, text) {
+    document.getElementById('loadingBox').classList.toggle('show', show);
+    document.getElementById('loadingText').textContent = text || 'Processing...';
+  }
+
+  // ════════ SCAN ALL USERS ════════
+  window.scanAllUsers = async () => {
+    if (!confirm('This will scan ALL users and calculate missing ROI. This may take a while. Continue?')) return;
+
+    const btnScan = document.getElementById('btnScan');
+    const btnFix = document.getElementById('btnFix');
+    btnScan.disabled = true;
+    setLoading(true, 'Fetching all users...');
+    log('🚀 Starting full system scan...', 'warn');
+    allUserData = [];
+    grandTotalMissing = 0;
+
+    try {
+      // Get ALL users
+      const usersSnap = await getDocs(collection(db, 'users'));
+      const totalUsers = usersSnap.size;
+      log(`📊 Found ${totalUsers} total users`);
+      
+      document.getElementById('statUsers').textContent = totalUsers;
+      
+      let processed = 0;
+      let usersWithMissing = 0;
+      let totalInvestments = 0;
+
+      for (const userDoc of usersSnap.docs) {
+        const userData = userDoc.data();
+        const uid = userDoc.id;
+        const email = userData.email || 'no-email';
+        
+        // Get investments for this user
+        const invSnap = await getDocs(query(collection(db, 'investments'), where('userId', '==', uid)));
+        
+        if (invSnap.empty) {
+          processed++;
+          continue;
+        }
+
+        let userMissing = 0;
+        let userInvestments = [];
+
+        invSnap.forEach(invDoc => {
+          const inv = invDoc.data();
+          totalInvestments++;
+          
+          const createdAtMs = getTimestampMs(inv.createdAt);
+          const maxDays = inv.days || 20;
+          const daysPaid = inv.daysPaid || 0;
+          const daily = inv.daily || 0;
+          const totalPaidOut = inv.totalPaidOut || 0;
+          
+          // Calculate what they SHOULD have
+          const expectedPayouts = calculateExpectedPayouts(createdAtMs, maxDays);
+          const expectedROI = expectedPayouts * daily;
+          const missing = Math.max(0, expectedROI - totalPaidOut);
+          
+          if (missing > 0.001) {
+            userMissing += missing;
+            
+            userInvestments.push({
+              id: invDoc.id,
+              planName: inv.planName || 'Plan',
+              daily: daily,
+              daysPaid: daysPaid,
+              expectedPayouts: expectedPayouts,
+              expectedROI: expectedROI,
+              totalPaidOut: totalPaidOut,
+              missing: missing,
+              status: inv.status,
+              locked: inv.locked
+            });
+          }
+        });
+
+        if (userMissing > 0.001) {
+          usersWithMissing++;
+          grandTotalMissing += userMissing;
+          allUserData.push({
+            uid: uid,
+            email: email,
+            investments: userInvestments,
+            totalMissing: userMissing
+          });
+        }
+
+        processed++;
+        
+        // Update progress
+        const pct = Math.round((processed / totalUsers) * 100);
+        document.getElementById('progressBar').style.width = pct + '%';
+        document.getElementById('loadingText').textContent = `Processing ${processed}/${totalUsers} users...`;
+        
+        if (processed % 5 === 0 || userMissing > 0) {
+          log(`👤 ${email}: ${userInvestments.length} investments, missing $${fu(userMissing)}`, userMissing > 0 ? 'err' : '');
+        }
+      }
+
+      // Update stats
+      document.getElementById('statInvest').textContent = totalInvestments;
+      document.getElementById('statMissing').textContent = '$' + fu(grandTotalMissing);
+      document.getElementById('progressBar').style.width = '100%';
+      
+      log(`✅ SCAN COMPLETE: ${usersWithMissing} users need fixes, total missing: $${fu(grandTotalMissing)}`, 'warn');
+      
+      // Show results
+      displayResults();
+      
+      btnFix.disabled = allUserData.length === 0;
+      
+    } catch (e) {
+      log(`❌ Error: ${e.message}`, 'err');
+    } finally {
+      setLoading(false);
+      btnScan.disabled = false;
+    }
+  };
+
+  function displayResults() {
+    const box = document.getElementById('resultsBox');
+    const list = document.getElementById('resultsList');
+    
+    if (allUserData.length === 0) {
+      box.style.display = 'block';
+      list.innerHTML = '<p style="color:var(--success);text-align:center;">✅ All users are up to date! No missing ROI found.</p>';
+      return;
+    }
+
+    box.style.display = 'block';
+    
+    // Sort by missing amount (highest first)
+    allUserData.sort((a, b) => b.totalMissing - a.totalMissing);
+    
+    let html = '';
+    allUserData.forEach(user => {
+      const invCount = user.investments.length;
+      html += `<div class="user-row">
+        <div class="ur-top"><span>${user.email}</span><span style="color:var(--error);">$${fu(user.totalMissing)}</span></div>
+        <div class="ur-info">${invCount} investment${invCount>1?'s':''} with missing ROI</div>`;
+      
+      user.investments.forEach(inv => {
+        html += `<div class="ur-info" style="margin-left:8px;margin-top:2px;">
+          • <span>${inv.planName}</span>: Day <span>${inv.daysPaid}</span>→<span>${inv.expectedPayouts}</span> | Missing: <span style="color:var(--error);">$${fu(inv.missing)}</span>
+        </div>`;
+      });
+      
+      html += `</div>`;
+    });
+    
+    list.innerHTML = html;
+  }
+
+  // ════════ FIX ALL USERS ════════
+  window.fixAllUsers = async () => {
+    if (allUserData.length === 0) { alert('No users to fix. Run scan first.'); return; }
+    if (!confirm(`Credit $${fu(grandTotalMissing)} total to ${allUserData.length} users? This will fix ALL missing ROI.`)) return;
+    
+    const btnFix = document.getElementById('btnFix');
+    btnFix.disabled = true;
+    setLoading(true, 'Crediting missing ROI to all users...');
+    
+    let fixed = 0;
+    let errors = 0;
+    let totalCredited = 0;
+    
+    for (const user of allUserData) {
+      try {
+        // Get current wallet
+        const userSnap = await getDoc(doc(db, 'users', user.uid));
+        const userData = userSnap.data();
+        const currentWdW = Number(userData?.withdrawalWallet) || 0;
+        const currentDpW = Number(userData?.depositWallet) || 0;
+        
+        // Credit withdrawal wallet
+        await updateDoc(doc(db, 'users', user.uid), {
+          withdrawalWallet: currentWdW + user.totalMissing,
+          walletBalance: currentDpW + currentWdW + user.totalMissing
+        });
+        
+        // Update each investment
+        for (const inv of user.investments) {
+          await updateDoc(doc(db, 'investments', inv.id), {
+            daysPaid: inv.expectedPayouts,
+            totalPaidOut: inv.expectedROI,
+            status: inv.expectedPayouts >= (inv.maxDays || 20) ? 'completed' : 'active',
+            lastPayoutDate: serverTimestamp()
+          });
+        }
+        
+        fixed++;
+        totalCredited += user.totalMissing;
+        log(`✅ ${user.email}: Credited $${fu(user.totalMissing)}`, '');
+        
+      } catch (e) {
+        errors++;
+        log(`❌ ${user.email}: Error - ${e.message}`, 'err');
+      }
+    }
+    
+    log(`🎉 DONE: ${fixed} fixed, ${errors} errors, $${fu(totalCredited)} total credited`, 'warn');
+    setLoading(false);
+    btnFix.disabled = false;
+    
+    alert(`Fixed ${fixed} users!\n$${fu(totalCredited)} total credited.\n${errors} errors.`);
+  };
+
+  // ════════ SEARCH & FIX SINGLE USER ════════
+  window.searchAndFix = async () => {
+    const email = document.getElementById('singleEmail').value.trim().toLowerCase();
+    if (!email) { alert('Enter an email address'); return; }
+    
+    setLoading(true, 'Searching for user...');
+    log(`🔍 Searching for: ${email}`);
+    
+    try {
+      const q = query(collection(db, 'users'), where('email', '==', email));
+      const snap = await getDocs(q);
+      
+      if (snap.empty) {
+        log(`❌ User not found: ${email}`, 'err');
+        setLoading(false);
+        return;
+      }
+      
+      const userDoc = snap.docs[0];
+      const uid = userDoc.id;
+      const userData = userDoc.data();
+      
+      log(`✅ Found: ${email} (${uid})`);
+      
+      // Get investments
+      const invSnap = await getDocs(query(collection(db, 'investments'), where('userId', '==', uid)));
+      
+      if (invSnap.empty) {
+        log(`⚠️ No investments found for ${email}`, 'warn');
+        setLoading(false);
+        return;
+      }
+      
+      let totalMissing = 0;
+      let fixes = [];
+      
+      invSnap.forEach(invDoc => {
+        const inv = invDoc.data();
+        const createdAtMs = getTimestampMs(inv.createdAt);
+        const maxDays = inv.days || 20;
+        const daily = inv.daily || 0;
+        const daysPaid = inv.daysPaid || 0;
+        const totalPaidOut = inv.totalPaidOut || 0;
+        const expectedPayouts = calculateExpectedPayouts(createdAtMs, maxDays);
+        const expectedROI = expectedPayouts * daily;
+        const missing = Math.max(0, expectedROI - totalPaidOut);
+        
+        log(`  📊 ${inv.planName}: Day ${daysPaid}/${maxDays} | Expected: ${expectedPayouts} days = $${fu(expectedROI)} | Paid: $${fu(totalPaidOut)} | Missing: $${fu(missing)}`, missing > 0 ? 'err' : '');
+        
+        if (missing > 0.001) {
+          totalMissing += missing;
+          fixes.push({
+            id: invDoc.id,
+            expectedPayouts: expectedPayouts,
+            expectedROI: expectedROI,
+            maxDays: maxDays
+          });
+        }
+      });
+      
+      if (totalMissing <= 0) {
+        log(`✅ ${email} is up to date! No missing ROI.`, 'warn');
+        setLoading(false);
+        return;
+      }
+      
+      if (!confirm(`${email} is missing $${fu(totalMissing)}. Fix now?`)) {
+        setLoading(false);
+        return;
+      }
+      
+      // Fix
+      const currentWdW = Number(userData.withdrawalWallet) || 0;
+      const currentDpW = Number(userData.depositWallet) || 0;
+      
+      await updateDoc(doc(db, 'users', uid), {
+        withdrawalWallet: currentWdW + totalMissing,
+        walletBalance: currentDpW + currentWdW + totalMissing
+      });
+      
+      for (const f of fixes) {
+        await updateDoc(doc(db, 'investments', f.id), {
+          daysPaid: f.expectedPayouts,
+          totalPaidOut: f.expectedROI,
+          status: f.expectedPayouts >= f.maxDays ? 'completed' : 'active',
+          lastPayoutDate: serverTimestamp()
+        });
+      }
+      
+      log(`✅ FIXED ${email}: Credited $${fu(totalMissing)} to withdrawal wallet!`, 'warn');
+      
+    } catch (e) {
+      log(`❌ Error: ${e.message}`, 'err');
+    } finally {
+      setLoading(false);
+    }
+  };
+</script>
+</body>
+</html>
