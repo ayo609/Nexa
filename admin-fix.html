@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<title>Nexa – Fix Wallets</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:system-ui,sans-serif;background:#0f0f1a;color:#e2e8f0;padding:16px;min-height:100vh;}
+  h1{text-align:center;color:#a78bfa;margin-bottom:4px;font-size:1.2rem;}
+  p.sub{text-align:center;color:#94a3b8;font-size:0.8rem;margin-bottom:16px;}
+  
+  .card{background:#1a1a2e;border-radius:14px;padding:16px;margin-bottom:12px;border:1px solid #2d2d44;}
+  .card h3{font-size:0.9rem;color:#a78bfa;margin-bottom:8px;}
+  
+  input,button{width:100%;height:46px;border-radius:10px;font-family:inherit;font-size:0.9rem;}
+  input{background:#1e1e38;border:1px solid #2d2d44;color:#e2e8f0;padding:0 12px;margin-bottom:8px;}
+  button{background:#5c3df4;color:#fff;border:none;font-weight:700;cursor:pointer;}
+  button.green{background:#16a34a;}
+  button.red{background:#dc2626;}
+  button:disabled{opacity:0.5;}
+
+  .user-info{background:#16213e;border-radius:10px;padding:12px;margin:8px 0;font-size:0.82rem;}
+  .user-info .row{display:flex;justify-content:space-between;padding:4px 0;}
+  .user-info .lbl{color:#94a3b8;}
+  .user-info .val{font-weight:700;}
+  .user-info .val.bad{color:#dc2626;}
+  .user-info .val.good{color:#16a34a;}
+
+  .msg{background:#064e3b;color:#6ee7b7;border-radius:10px;padding:12px;text-align:center;font-weight:700;font-size:0.85rem;margin-top:10px;display:none;}
+  .msg.show{display:block;}
+  .msg.err{background:#7f1d1d;color:#fca5a5;}
+
+  .spinner{width:20px;height:20px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;display:none;margin:10px auto;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .loading{text-align:center;padding:12px;display:none;}
+  .loading.show{display:block;}
+</style>
+</head>
+<body>
+
+<h1>🔧 Fix User Wallet</h1>
+<p class="sub">Search user → See what's wrong → Fix with one click</p>
+
+<div class="card">
+  <h3>Search User</h3>
+  <input type="text" id="emailInput" placeholder="Enter user email...">
+  <button onclick="searchUser()">🔍 Search</button>
+  <div class="loading" id="loading1"><div class="spinner"></div><p style="color:#94a3b8;font-size:0.8rem;">Searching...</p></div>
+</div>
+
+<div class="card" id="resultCard" style="display:none;">
+  <h3 id="resultEmail">—</h3>
+  <div class="user-info">
+    <div class="row"><span class="lbl">💰 Deposit Wallet</span><span class="val" id="rDepW">$0.00</span></div>
+    <div class="row"><span class="lbl">💸 Withdrawal Wallet</span><span class="val" id="rWdW">$0.00</span></div>
+    <div class="row"><span class="lbl">💵 Naira Wallet</span><span class="val" id="rNgW">₦0</span></div>
+    <div class="row"><span class="lbl">Wallet Status</span><span class="val" id="rStatus">Checking...</span></div>
+  </div>
+  
+  <div id="investSection" style="display:none;">
+    <h3 style="margin-top:12px;font-size:0.85rem;">📊 Investments & Missing ROI</h3>
+    <div id="investList"></div>
+    <div class="row" style="margin-top:8px;padding:8px;background:#16213e;border-radius:8px;">
+      <span class="lbl">Total Missing ROI</span>
+      <span class="val bad" id="rTotalMissing">$0.00</span>
+    </div>
+  </div>
+
+  <button class="green" id="btnFix" onclick="fixUser()" disabled>💸 Fix Wallet & Credit Missing ROI</button>
+  <div class="loading" id="loading2"><div class="spinner"></div><p style="color:#94a3b8;font-size:0.8rem;">Fixing...</p></div>
+  <div class="msg" id="msgBox"></div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const fc = { apiKey:"AIzaSyA4nRl80lwklik6A8RTvE0Py-jNEg8PJ58", authDomain:"nexa-a8cad.firebaseapp.com", projectId:"nexa-a8cad", storageBucket:"nexa-a8cad.firebasestorage.app", messagingSenderId:"324559998149", appId:"1:324559998149:web:e23ddfa3f0c71114eab4ac" };
+  const app = initializeApp(fc);
+  const db = getFirestore(app);
+
+  const fu = n => (Number(n)||0).toFixed(2);
+  const ff = n => Math.round(Number(n)||0).toLocaleString();
+
+  let currentUid = null;
+  let currentData = null;
+  let missingROI = 0;
+  let investFixes = [];
+
+  function getTs(ts) {
+    if(!ts) return 0;
+    if(ts.toMillis) return ts.toMillis();
+    if(ts.seconds) return ts.seconds*1000;
+    if(ts instanceof Date) return ts.getTime();
+    return typeof ts==='number'?ts:0;
+  }
+
+  function calcExpected(createdMs, max) {
+    const now = Date.now();
+    const d = new Date(createdMs); d.setHours(0,0,0,0);
+    let c=0, ch=new Date(d); ch.setDate(ch.getDate()+1); ch.setHours(0,0,0,0);
+    while(ch.getTime()<=now&&c<max){if(ch.getDay()>=1&&ch.getDay()<=5)c++;ch.setDate(ch.getDate()+1);}
+    return c;
+  }
+
+  function showMsg(msg, isErr) {
+    const box = document.getElementById('msgBox');
+    box.textContent = msg;
+    box.className = 'msg show' + (isErr ? ' err' : '');
+    setTimeout(() => box.classList.remove('show'), 5000);
+  }
+
+  function setLoading(id, show) {
+    document.getElementById(id).classList.toggle('show', show);
+  }
+
+  window.searchUser = async () => {
+    const email = document.getElementById('emailInput').value.trim().toLowerCase();
+    if (!email) { showMsg('Enter an email address', true); return; }
+
+    setLoading('loading1', true);
+    document.getElementById('resultCard').style.display = 'none';
+    document.getElementById('btnFix').disabled = true;
+    missingROI = 0;
+    investFixes = [];
+
+    try {
+      const q = query(collection(db, 'users'), where('email', '==', email));
+      const snap = await getDocs(q);
+
+      if (snap.empty) {
+        showMsg('User not found', true);
+        setLoading('loading1', false);
+        return;
+      }
+
+      const uDoc = snap.docs[0];
+      currentUid = uDoc.id;
+      currentData = uDoc.data();
+
+      document.getElementById('resultEmail').textContent = email;
+      document.getElementById('resultCard').style.display = 'block';
+
+      // Display wallets
+      const dpW = currentData.depositWallet;
+      const wdW = currentData.withdrawalWallet;
+      const ngW = currentData.nairaWallet;
+
+      const isDepBad = dpW === undefined || dpW === null || isNaN(dpW);
+      const isWdBad = wdW === undefined || wdW === null || isNaN(wdW);
+      const isNgBad = ngW === undefined || ngW === null || isNaN(ngW);
+
+      document.getElementById('rDepW').textContent = '$' + fu(dpW);
+      document.getElementById('rDepW').className = 'val' + (isDepBad ? ' bad' : ' good');
+      
+      document.getElementById('rWdW').textContent = '$' + fu(wdW);
+      document.getElementById('rWdW').className = 'val' + (isWdBad ? ' bad' : ' good');
+      
+      document.getElementById('rNgW').textContent = '₦' + ff(ngW);
+      document.getElementById('rNgW').className = 'val' + (isNgBad ? ' bad' : ' good');
+
+      if (isDepBad || isWdBad || isNgBad) {
+        document.getElementById('rStatus').textContent = '🔴 BROKEN (NaN/undefined)';
+        document.getElementById('rStatus').className = 'val bad';
+      } else {
+        document.getElementById('rStatus').textContent = '🟢 OK';
+        document.getElementById('rStatus').className = 'val good';
+      }
+
+      // Check investments
+      const invSnap = await getDocs(query(collection(db, 'investments'), where('userId', '==', currentUid)));
+      
+      if (invSnap.empty) {
+        document.getElementById('investSection').style.display = 'none';
+        document.getElementById('btnFix').disabled = !(isDepBad || isWdBad || isNgBad);
+      } else {
+        document.getElementById('investSection').style.display = 'block';
+        let html = '';
+        
+        invSnap.forEach(dc => {
+          const inv = dc.data();
+          const created = getTs(inv.createdAt);
+          const expected = calcExpected(created, inv.days || 20);
+          const expectedROI = expected * (inv.daily || 0);
+          const paid = inv.totalPaidOut || 0;
+          const missing = Math.max(0, expectedROI - paid);
+          
+          if (missing > 0.001) {
+            missingROI += missing;
+            investFixes.push({
+              id: dc.id,
+              daysPaid: expected,
+              totalPaidOut: expectedROI,
+              isComplete: expected >= (inv.days || 20)
+            });
+          }
+
+          html += `<div style="font-size:0.75rem;padding:6px 0;border-bottom:1px solid #2d2d44;">
+            <b>${inv.planName || 'Plan'}</b>: Day ${inv.daysPaid||0}/${inv.days||20}
+            <br>Expected: ${expected} days = $${fu(expectedROI)} | Paid: $${fu(paid)}
+            <br><span style="color:${missing>0?'#dc2626':'#16a34a'};font-weight:700;">Missing: $${fu(missing)}</span>
+          </div>`;
+        });
+        
+        document.getElementById('investList').innerHTML = html;
+        document.getElementById('rTotalMissing').textContent = '$' + fu(missingROI);
+
+        const needsFix = isDepBad || isWdBad || isNgBad || missingROI > 0.001;
+        document.getElementById('btnFix').disabled = !needsFix;
+      }
+
+    } catch (e) {
+      showMsg('Error: ' + e.message, true);
+    }
+    setLoading('loading1', false);
+  };
+
+  window.fixUser = async () => {
+    if (!currentUid) return;
+    
+    const needsWalletFix = currentData.depositWallet === undefined || isNaN(currentData.depositWallet) ||
+                           currentData.withdrawalWallet === undefined || isNaN(currentData.withdrawalWallet) ||
+                           currentData.nairaWallet === undefined || isNaN(currentData.nairaWallet);
+    
+    const msg = needsWalletFix && missingROI > 0 
+      ? `Fix broken wallet AND credit $${fu(missingROI)} missing ROI?`
+      : needsWalletFix 
+        ? 'Fix broken wallet (reset NaN to 0)?'
+        : `Credit $${fu(missingROI)} missing ROI to withdrawal wallet?`;
+    
+    if (!confirm(msg)) return;
+
+    setLoading('loading2', true);
+    document.getElementById('btnFix').disabled = true;
+
+    try {
+      const snap = await getDoc(doc(db, 'users', currentUid));
+      const d = snap.data();
+      const currentWdW = Number(d.withdrawalWallet) || 0;
+      const currentDpW = Number(d.depositWallet) || 0;
+
+      // Fix wallet
+      const updates = {};
+      if (d.depositWallet === undefined || isNaN(d.depositWallet)) updates.depositWallet = 0;
+      if (d.withdrawalWallet === undefined || isNaN(d.withdrawalWallet)) updates.withdrawalWallet = missingROI;
+      else updates.withdrawalWallet = currentWdW + missingROI;
+      if (d.nairaWallet === undefined || isNaN(d.nairaWallet)) updates.nairaWallet = 0;
+      updates.walletBalance = (updates.depositWallet ?? currentDpW) + (updates.withdrawalWallet ?? currentWdW) + missingROI;
+
+      await updateDoc(doc(db, 'users', currentUid), updates);
+
+      // Fix investments
+      for (const fix of investFixes) {
+        await updateDoc(doc(db, 'investments', fix.id), {
+          daysPaid: fix.daysPaid,
+          totalPaidOut: fix.totalPaidOut,
+          status: fix.isComplete ? 'completed' : 'active',
+          lastPayoutDate: serverTimestamp()
+        });
+      }
+
+      showMsg(`✅ Done! Wallet fixed & $${fu(missingROI)} credited to Withdrawal Wallet.`);
+      
+      // Refresh display
+      await window.searchUser();
+
+    } catch (e) {
+      showMsg('Error: ' + e.message, true);
+    }
+    setLoading('loading2', false);
+  };
+</script>
+</body>
+</html>
