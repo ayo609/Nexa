@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<title>Nexa – 1-Month Anniversary</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  :root{
+    --bg:#0f0f1a; --card:#1a1a2e; --card2:#16213e;
+    --primary:#f59e0b; --accent:#fbbf24; --text:#e2e8f0; --muted:#94a3b8;
+    --border:#2d2d44; --input-bg:#1e1e38;
+    --success:#16a34a; --error:#dc2626;
+  }
+  body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:40px;}
+
+  .topbar{background:rgba(26,26,46,0.9);backdrop-filter:blur(10px);padding:16px 18px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;}
+  .back-btn{width:38px;height:38px;border-radius:50%;background:var(--input-bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;text-decoration:none;color:var(--text);flex-shrink:0;}
+  .back-btn svg{width:18px;height:18px;}
+  .topbar h1{font-size:1.05rem;font-weight:800;color:var(--accent);}
+
+  main{padding:16px;max-width:480px;margin:0 auto;display:flex;flex-direction:column;gap:14px;}
+
+  .hero{background:linear-gradient(135deg,#1e1445,#3b1fa8,#5c3df4);border-radius:20px;padding:24px 18px;text-align:center;border:2px solid var(--accent);}
+  .hero .emoji{font-size:3rem;margin-bottom:8px;animation:bounce 1.5s ease infinite;}
+  @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+  .hero h2{font-size:1.3rem;font-weight:800;color:#fff;margin-bottom:4px;}
+  .hero p{font-size:0.8rem;color:rgba(255,255,255,0.7);}
+
+  .countdown-card{background:var(--card);border-radius:16px;padding:16px;text-align:center;border:1px solid var(--accent);}
+  .countdown-card .lbl{font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;}
+  .countdown-card .time{font-size:2rem;font-weight:800;color:var(--accent);letter-spacing:2px;font-variant-numeric:tabular-nums;}
+
+  .deposit-box{background:var(--card);border-radius:14px;padding:14px;display:flex;justify-content:space-between;align-items:center;border:1px solid var(--border);}
+  .deposit-box .lbl{font-size:0.75rem;color:var(--muted);}
+  .deposit-box .amt{font-size:1.2rem;font-weight:800;color:var(--accent);}
+
+  .offer-closed{background:var(--card);border-radius:20px;padding:40px 20px;text-align:center;border:1px solid var(--border);}
+  .offer-closed .icon{font-size:3rem;margin-bottom:12px;}
+  .offer-closed h3{font-size:1.1rem;font-weight:700;margin-bottom:6px;}
+  .offer-closed p{font-size:0.85rem;color:var(--muted);}
+
+  .not-started{background:var(--card);border-radius:20px;padding:40px 20px;text-align:center;border:1px solid var(--accent);}
+  .not-started .icon{font-size:3rem;margin-bottom:12px;}
+  .not-started h3{font-size:1.1rem;font-weight:700;margin-bottom:6px;color:var(--accent);}
+  .not-started p{font-size:0.85rem;color:var(--muted);}
+
+  .plans-grid{display:flex;flex-direction:column;gap:12px;}
+  .plan-card{background:var(--card);border:2px solid var(--border);border-radius:18px;padding:18px;cursor:pointer;transition:all 0.2s;position:relative;}
+  .plan-card:hover{border-color:var(--accent);transform:translateY(-2px);}
+  .plan-card.selected{border-color:var(--accent);background:linear-gradient(135deg,#1e1445,#3b1fa8);}
+  .plan-card .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+  .plan-card .name{font-size:1.1rem;font-weight:800;}
+  .plan-card .badge{background:var(--accent);color:#1e1445;font-size:0.6rem;font-weight:800;padding:3px 10px;border-radius:50px;}
+  .plan-card .invest{font-size:0.9rem;color:var(--muted);margin-bottom:2px;}
+  .plan-card .return{font-size:1.2rem;font-weight:800;color:var(--success);}
+  .plan-card .info{font-size:0.75rem;color:var(--muted);margin-top:4px;}
+  .plan-card .check{position:absolute;top:12px;right:12px;width:22px;height:22px;border-radius:50%;background:var(--accent);display:none;align-items:center;justify-content:center;}
+  .plan-card.selected .check{display:flex;}
+  .plan-card .check svg{width:12px;height:12px;color:#fff;}
+
+  .btn-buy{width:100%;height:54px;background:var(--accent);color:#1e1445;font-family:inherit;font-size:1rem;font-weight:800;border:none;border-radius:14px;cursor:pointer;display:none;align-items:center;justify-content:center;gap:8px;}
+  .btn-buy.show{display:flex;}
+  .btn-buy:disabled{opacity:0.5;cursor:not-allowed;}
+  .spinner{width:18px;height:18px;border:2px solid rgba(30,20,69,0.3);border-top-color:#1e1445;border-radius:50%;animation:spin .6s linear infinite;display:none;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .btn-buy.loading .spinner{display:block;}
+  .btn-buy.loading .btn-text{display:none;}
+
+  .my-investment{background:var(--card);border-radius:18px;padding:18px;border:1px solid var(--accent);display:none;}
+  .my-investment.show{display:block;}
+  .my-investment h3{font-size:1rem;font-weight:800;color:var(--accent);margin-bottom:10px;}
+  .my-investment .row{display:flex;justify-content:space-between;padding:6px 0;font-size:0.82rem;}
+  .my-investment .row .l{color:var(--muted);}.my-investment .row .v{font-weight:700;}
+  .my-investment .locked-badge{background:#fef3c7;color:#92400e;padding:8px 12px;border-radius:10px;text-align:center;font-weight:700;font-size:0.82rem;margin-top:10px;}
+  .my-investment .days-left{font-size:1.5rem;font-weight:800;color:var(--accent);text-align:center;margin:8px 0;}
+  .my-investment .days-left span{font-size:0.75rem;color:var(--muted);display:block;}
+
+  .withdraw-section{background:var(--card);border-radius:18px;padding:18px;border:1px solid var(--success);display:none;}
+  .withdraw-section.show{display:block;}
+  .withdraw-section h3{font-size:1rem;font-weight:800;color:var(--success);margin-bottom:10px;}
+  .withdraw-section .balance{font-size:1.5rem;font-weight:800;color:var(--success);text-align:center;margin-bottom:12px;}
+  .withdraw-section .balance span{font-size:0.7rem;color:var(--muted);display:block;}
+
+  .field{margin-bottom:10px;}
+  .field label{display:block;font-size:0.7rem;font-weight:600;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.3px;}
+  .field input{width:100%;height:46px;background:var(--input-bg);border:2px solid var(--border);border-radius:10px;padding:0 12px;font-family:inherit;font-size:0.9rem;color:var(--text);outline:none;}
+  .field input:focus{border-color:var(--success);}
+
+  .btn-withdraw{width:100%;height:50px;background:var(--success);color:#fff;font-family:inherit;font-size:0.95rem;font-weight:700;border:none;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;}
+  .btn-withdraw:disabled{opacity:0.5;cursor:not-allowed;}
+
+  .result-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);backdrop-filter:blur(8px);z-index:100;align-items:center;justify-content:center;padding:20px;}
+  .result-overlay.show{display:flex;}
+  .result-card{background:var(--card);border-radius:22px;padding:30px 24px;max-width:360px;width:100%;text-align:center;animation:pop .4s ease;}
+  @keyframes pop{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
+  .result-card .icon{font-size:3rem;margin-bottom:12px;}
+  .result-card h3{font-size:1.2rem;font-weight:800;margin-bottom:8px;}
+  .result-card p{font-size:0.88rem;color:var(--muted);line-height:1.6;margin-bottom:18px;}
+  .result-card button{width:100%;padding:14px;border:none;border-radius:12px;font-family:inherit;font-size:0.95rem;font-weight:700;cursor:pointer;background:var(--accent);color:#1e1445;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="dashboard.html" class="back-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><polyline points="15 18 9 12 15 6"/></svg></a>
+  <div><h1>🎉 Anniversary Special</h1></div>
+</div>
+
+<main>
+
+  <div class="hero">
+    <div class="emoji">🎉</div>
+    <h2>1-Month Anniversary!</h2>
+    <p>Limited time · 3 special plans · 100% ROI</p>
+  </div>
+
+  <!-- Countdown Timer -->
+  <div class="countdown-card" id="countdownCard">
+    <div class="lbl" id="countdownLabel">Offer ends in</div>
+    <div class="time" id="countdownTime">--:--:--</div>
+  </div>
+
+  <!-- Deposit Wallet -->
+  <div class="deposit-box">
+    <div><div class="lbl">💰 Deposit Wallet (USD)</div><div class="amt">$<span id="depBal">0.00</span></div></div>
+    <div style="text-align:right;"><div class="lbl">Exchange Rate</div><div class="amt">₦1,500/$</div></div>
+  </div>
+
+  <!-- NOT STARTED (Before 8AM) -->
+  <div class="not-started" id="notStarted">
+    <div class="icon">⏰</div>
+    <h3>Offer Starts Soon!</h3>
+    <p>Come back at <strong>8:00 AM</strong> to access these special anniversary plans.</p>
+  </div>
+
+  <!-- OFFER CLOSED (After 12AM) -->
+  <div class="offer-closed" id="offerClosed" style="display:none;">
+    <div class="icon">🏁</div>
+    <h3>Offer Has Ended</h3>
+    <p>This anniversary special has expired. Check your investments below.</p>
+  </div>
+
+  <!-- PLANS (Available 8AM to 12AM) -->
+  <div id="plansSection" style="display:none;">
+    <p style="font-weight:700;font-size:0.95rem;color:var(--accent);">Select your anniversary plan</p>
+    
+    <div class="plans-grid">
+      <div class="plan-card" id="plan20k" onclick="selectPlan(20000)">
+        <div class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div class="top"><span class="name">🥈 Silver</span><span class="badge">100% ROI</span></div>
+        <div class="invest">Invest: ₦20,000</div>
+        <div class="return">Receive: ₦40,000</div>
+        <div class="info">15 weekdays · Locked · 0% withdrawal fee</div>
+      </div>
+      
+      <div class="plan-card" id="plan50k" onclick="selectPlan(50000)">
+        <div class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div class="top"><span class="name">🥇 Gold</span><span class="badge">100% ROI</span></div>
+        <div class="invest">Invest: ₦50,000</div>
+        <div class="return">Receive: ₦100,000</div>
+        <div class="info">15 weekdays · Locked · 0% withdrawal fee</div>
+      </div>
+      
+      <div class="plan-card" id="plan100k" onclick="selectPlan(100000)">
+        <div class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div class="top"><span class="name">💎 Platinum</span><span class="badge">100% ROI</span></div>
+        <div class="invest">Invest: ₦100,000</div>
+        <div class="return">Receive: ₦200,000</div>
+        <div class="info">15 weekdays · Locked · 0% withdrawal fee</div>
+      </div>
+    </div>
+
+    <button class="btn-buy" id="btnBuy" disabled>
+      <span class="btn-text">Purchase Now</span>
+      <div class="spinner"></div>
+    </button>
+  </div>
+
+  <!-- MY INVESTMENT -->
+  <div class="my-investment" id="myInvestment">
+    <h3>📊 My Anniversary Investment</h3>
+    <div class="row"><span class="l">Plan</span><span class="v" id="myPlanName">—</span></div>
+    <div class="row"><span class="l">Invested</span><span class="v">₦<span id="myInvested">0</span></span></div>
+    <div class="row"><span class="l">Expected Return</span><span class="v" style="color:var(--success);">₦<span id="myReturn">0</span></span></div>
+    <div class="locked-badge">🔒 LOCKED — No withdrawal until 15 weekdays complete</div>
+    <div class="days-left"><span id="myDaysLeft">0</span><span>weekdays remaining</span></div>
+  </div>
+
+  <!-- WITHDRAWAL SECTION -->
+  <div class="withdraw-section" id="withdrawSection">
+    <h3>💸 Withdraw Your Returns (0% Fee)</h3>
+    <div class="balance">₦<span id="withdrawBal">0</span><span>Available Balance</span></div>
+    <div class="field"><label>Bank Name</label><input type="text" id="bankName" placeholder="Your bank"></div>
+    <div class="field"><label>Account Number</label><input type="text" id="acctNum" placeholder="10 digits" maxlength="10"></div>
+    <div class="field"><label>Account Name</label><input type="text" id="acctName" placeholder="Account holder name"></div>
+    <button class="btn-withdraw" id="btnWithdraw" onclick="submitWithdrawal()">Withdraw Full Amount (₦<span id="withdrawBtnAmt">0</span>)</button>
+  </div>
+
+</main>
+
+<div class="result-overlay" id="resultOverlay">
+  <div class="result-card">
+    <div class="icon" id="resultIcon">✅</div>
+    <h3 id="resultTitle"></h3>
+    <p id="resultMsg"></p>
+    <button onclick="closeResult()">OK</button>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { getFirestore, doc, getDoc, updateDoc, collection, addDoc, query, where, getDocs, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const fc = { apiKey:"AIzaSyA4nRl80lwklik6A8RTvE0Py-jNEg8PJ58", authDomain:"nexa-a8cad.firebaseapp.com", projectId:"nexa-a8cad", storageBucket:"nexa-a8cad.firebasestorage.app", messagingSenderId:"324559998149", appId:"1:324559998149:web:e23ddfa3f0c71114eab4ac" };
+  const app = initializeApp(fc);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  const USD_RATE = 1500;
+  const PLANS = {
+    20000: { name: 'Silver', naira: 20000, usd: 13.33, returnAmount: 40000 },
+    50000: { name: 'Gold', naira: 50000, usd: 33.33, returnAmount: 100000 },
+    100000: { name: 'Platinum', naira: 100000, usd: 66.67, returnAmount: 200000 }
+  };
+
+  const ff = n => Math.round(Number(n)||0).toLocaleString();
+  const fu = n => (Number(n)||0).toFixed(2);
+
+  let U = null, depW = 0, selectedAmt = null;
+  let myAnniversary = null; // Current user's anniversary investment
+  let anniversaryBalance = 0;
+
+  // ════════ COUNTDOWN TIMER ════════
+  function checkOfferTime() {
+    const now = new Date();
+    const todayStart = new Date(now);
+    todayStart.setHours(0, 0, 0, 0);
+    
+    const offerStart = new Date(todayStart);
+    offerStart.setHours(8, 0, 0, 0); // 8AM today
+    
+    const offerEnd = new Date(todayStart);
+    offerEnd.setHours(24, 0, 0, 0); // 12AM (midnight)
+    
+    if (now < offerStart) {
+      // Before 8AM - not started
+      document.getElementById('notStarted').style.display = 'block';
+      document.getElementById('plansSection').style.display = 'none';
+      document.getElementById('offerClosed').style.display = 'none';
+      document.getElementById('countdownLabel').textContent = 'Offer starts in';
+      
+      // Update countdown every second
+      const timer = setInterval(() => {
+        const diff = offerStart - Date.now();
+        if (diff <= 0) {
+          clearInterval(timer);
+          location.reload();
+          return;
+        }
+        const h = Math.floor(diff / 3600000);
+        const m = Math.floor((diff % 3600000) / 60000);
+        const s = Math.floor((diff % 60000) / 1000);
+        document.getElementById('countdownTime').textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+      }, 1000);
+      
+    } else if (now >= offerStart && now < offerEnd) {
+      // Between 8AM and 12AM - offer is live
+      document.getElementById('notStarted').style.display = 'none';
+      document.getElementById('plansSection').style.display = 'block';
+      document.getElementById('offerClosed').style.display = 'none';
+      document.getElementById('countdownLabel').textContent = 'Offer ends in';
+      
+      const timer = setInterval(() => {
+        const diff = offerEnd - Date.now();
+        if (diff <= 0) {
+          clearInterval(timer);
+          document.getElementById('plansSection').style.display = 'none';
+          document.getElementById('offerClosed').style.display = 'block';
+          document.getElementById('countdownTime').textContent = '00:00:00';
+          return;
+        }
+        const h = Math.floor(diff / 3600000);
+        const m = Math.floor((diff % 3600000) / 60000);
+        const s = Math.floor((diff % 60000) / 1000);
+        document.getElementById('countdownTime').textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+      }, 1000);
+      
+    } else {
+      // After 12AM - offer ended
+      document.getElementById('notStarted').style.display = 'none';
+      document.getElementById('plansSection').style.display = 'none';
+      document.getElementById('offerClosed').style.display = 'block';
+      document.getElementById('countdownLabel').textContent = 'Offer ended';
+      document.getElementById('countdownTime').textContent = '00:00:00';
+    }
+  }
+
+  // ════════ SELECT PLAN ════════
+  window.selectPlan = (amt) => {
+    selectedAmt = amt;
+    document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
+    document.getElementById('plan' + amt).classList.add('selected');
+    
+    const btn = document.getElementById('btnBuy');
+    btn.classList.add('show');
+    btn.disabled = false;
+  };
+
+  // ════════ PURCHASE ════════
+  document.getElementById('btnBuy').addEventListener('click', async () => {
+    if (!selectedAmt || !U) return;
+    const plan = PLANS[selectedAmt];
+    const usdCost = plan.usd;
+    
+    if (depW < usdCost) {
+      showResult('❌', 'Insufficient Balance', `You need $${fu(usdCost)} in your Deposit Wallet.\nCurrent balance: $${fu(depW)}`);
+      return;
+    }
+    
+    // Check if user already has an anniversary investment
+    const existing = await getDocs(query(collection(db, 'anniversaryInvestments'), where('userId', '==', U.uid), where('status', '==', 'active')));
+    if (!existing.empty) {
+      showResult('❌', 'Already Purchased', 'You already have an active anniversary investment.');
+      return;
+    }
+    
+    const btn = document.getElementById('btnBuy');
+    btn.classList.add('loading');
+    btn.disabled = true;
+    
+    try {
+      const ur = doc(db, 'users', U.uid);
+      await runTransaction(db, async (tx) => {
+        const s = await tx.get(ur);
+        const cw = Number(s.data().depositWallet) || 0;
+        if (cw < usdCost) throw new Error('INSUFFICIENT');
+        tx.update(ur, { depositWallet: cw - usdCost, walletBalance: (Number(s.data().depositWallet)||0) + (Number(s.data().withdrawalWallet)||0) - usdCost });
+      });
+      
+      depW -= usdCost;
+      document.getElementById('depBal').textContent = fu(depW);
+      
+      // Create anniversary investment - NO referral bonus
+      await addDoc(collection(db, 'anniversaryInvestments'), {
+        userId: U.uid,
+        userEmail: U.email || '',
+        planName: plan.name,
+        amountNaira: plan.naira,
+        amountUSD: plan.usd,
+        returnAmount: plan.returnAmount,
+        daysRequired: 15,
+        weekdaysCompleted: 0,
+        status: 'active',
+        locked: true,
+        createdAt: serverTimestamp(),
+        completedAt: null,
+        noReferralBonus: true
+      });
+      
+      showResult('🎉', 'Purchased Successfully!', 
+        `You invested ₦${ff(plan.naira)} in the ${plan.name} Anniversary Plan.\n\n` +
+        `After 15 weekdays, you'll receive ₦${ff(plan.returnAmount)} (100% ROI).\n\n` +
+        `Locked until completion. No withdrawal fee!`);
+      
+      await loadMyInvestment();
+      
+    } catch (e) {
+      showResult('❌', 'Failed', e.message === 'INSUFFICIENT' ? 'Balance changed. Try again.' : 'Error: ' + e.message);
+    } finally {
+      btn.classList.remove('loading');
+      btn.disabled = false;
+    }
+  });
+
+  // ════════ LOAD MY INVESTMENT ════════
+  async function loadMyInvestment() {
+    if (!U) return;
+    const snap = await getDocs(query(collection(db, 'anniversaryInvestments'), where('userId', '==', U.uid)));
+    
+    if (snap.empty) {
+      document.getElementById('myInvestment').classList.remove('show');
+      document.getElementById('withdrawSection').classList.remove('show');
+      return;
+    }
+    
+    const invDoc = snap.docs[0];
+    const inv = invDoc.data();
+    myAnniversary = { id: invDoc.id, ...inv };
+    
+    // Calculate weekdays completed
+    if (inv.status === 'active') {
+      const created = inv.createdAt?.toMillis ? inv.createdAt.toMillis() : Date.now();
+      const weekdaysDone = countWeekdays(created);
+      
+      if (weekdaysDone >= 15) {
+        // Investment complete - credit to balance
+        await updateDoc(doc(db, 'anniversaryInvestments', invDoc.id), {
+          status: 'completed',
+          weekdaysCompleted: 15,
+          completedAt: serverTimestamp()
+        });
+        
+        // Credit to user's anniversary balance
+        const us = await getDoc(doc(db, 'users', U.uid));
+        const currentBal = Number(us.data().anniversaryBalance) || 0;
+        await updateDoc(doc(db, 'users', U.uid), {
+          anniversaryBalance: currentBal + inv.returnAmount
+        });
+        
+        anniversaryBalance = currentBal + inv.returnAmount;
+        myAnniversary.status = 'completed';
+        myAnniversary.weekdaysCompleted = 15;
+      } else {
+        await updateDoc(doc(db, 'anniversaryInvestments', invDoc.id), {
+          weekdaysCompleted: weekdaysDone
+        });
+        myAnniversary.weekdaysCompleted = weekdaysDone;
+      }
+    }
+    
+    // Display
+    document.getElementById('myInvestment').classList.add('show');
+    document.getElementById('myPlanName').textContent = inv.planName + ' Anniversary';
+    document.getElementById('myInvested').textContent = ff(inv.amountNaira);
+    document.getElementById('myReturn').textContent = ff(inv.returnAmount);
+    
+    if (inv.status === 'completed' || myAnniversary.weekdaysCompleted >= 15) {
+      document.getElementById('myDaysLeft').textContent = '0';
+      document.getElementById('myInvestment').querySelector('.locked-badge').textContent = '✅ UNLOCKED — Ready to withdraw!';
+      document.getElementById('withdrawSection').classList.add('show');
+      document.getElementById('withdrawBal').textContent = ff(inv.returnAmount);
+      document.getElementById('withdrawBtnAmt').textContent = ff(inv.returnAmount);
+      anniversaryBalance = inv.returnAmount;
+    } else {
+      const remaining = 15 - (myAnniversary.weekdaysCompleted || 0);
+      document.getElementById('myDaysLeft').textContent = remaining;
+      document.getElementById('withdrawSection').classList.remove('show');
+    }
+  }
+
+  // Count weekdays (Mon-Fri) from a timestamp
+  function countWeekdays(fromMs) {
+    const now = Date.now();
+    const d = new Date(fromMs);
+    d.setHours(0,0,0,0);
+    let count = 0;
+    let ch = new Date(d);
+    ch.setDate(ch.getDate() + 1);
+    ch.setHours(0,0,0,0);
+    while (ch.getTime() <= now && count < 15) {
+      if (ch.getDay() >= 1 && ch.getDay() <= 5) count++;
+      ch.setDate(ch.getDate() + 1);
+    }
+    return count;
+  }
+
+  // ════════ WITHDRAWAL (0% FEE) ════════
+  window.submitWithdrawal = async () => {
+    if (!U || !myAnniversary || myAnniversary.status !== 'completed') {
+      showResult('❌', 'Still Locked', 'Your investment is still locked. Wait for 15 weekdays.');
+      return;
+    }
+    
+    const bank = document.getElementById('bankName').value.trim();
+    const acct = document.getElementById('acctNum').value.trim();
+    const name = document.getElementById('acctName').value.trim();
+    
+    if (!bank || acct.length !== 10 || name.length < 3) {
+      showResult('❌', 'Missing Info', 'Enter bank name, 10-digit account number, and account name.');
+      return;
+    }
+    
+    // Check if already withdrawn
+    const wsnap = await getDocs(query(collection(db, 'anniversaryWithdrawals'), where('userId', '==', U.uid)));
+    if (!wsnap.empty) {
+      showResult('❌', 'Already Withdrawn', 'You have already requested a withdrawal for your anniversary returns.');
+      return;
+    }
+    
+    try {
+      // Reset anniversary balance
+      await updateDoc(doc(db, 'users', U.uid), { anniversaryBalance: 0 });
+      
+      // Create withdrawal request
+      await addDoc(collection(db, 'anniversaryWithdrawals'), {
+        userId: U.uid,
+        userEmail: U.email || '',
+        amount: myAnniversary.returnAmount,
+        bankName: bank,
+        accountNumber: acct,
+        accountName: name,
+        status: 'pending',
+        createdAt: serverTimestamp(),
+        noFee: true
+      });
+      
+      showResult('✅', 'Withdrawal Sent! 🎉',
+        `₦${ff(myAnniversary.returnAmount)} withdrawal requested.\n\n` +
+        `0% fee — full amount will be sent to your bank account.\n\n` +
+        `Admin will process shortly.`);
+      
+      document.getElementById('withdrawSection').classList.remove('show');
+      
+    } catch (e) {
+      showResult('❌', 'Failed', 'Error: ' + e.message);
+    }
+  };
+
+  // ════════ RESULT OVERLAY ════════
+  function showResult(icon, title, msg) {
+    document.getElementById('resultIcon').textContent = icon;
+    document.getElementById('resultTitle').textContent = title;
+    document.getElementById('resultMsg').textContent = msg;
+    document.getElementById('resultOverlay').classList.add('show');
+  }
+  window.closeResult = () => document.getElementById('resultOverlay').classList.remove('show');
+
+  // ════════ INIT ════════
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) { window.location.href = 'login.html'; return; }
+    U = user;
+    
+    // Load deposit wallet
+    const us = await getDoc(doc(db, 'users', U.uid));
+    if (us.exists()) {
+      depW = Number(us.data().depositWallet) || 0;
+      anniversaryBalance = Number(us.data().anniversaryBalance) || 0;
+    }
+    document.getElementById('depBal').textContent = fu(depW);
+    
+    checkOfferTime();
+    await loadMyInvestment();
+  });
+</script>
+</body>
+</html>
