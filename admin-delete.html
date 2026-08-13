@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<title>Nexa – Admin: Delete Investments</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  :root{
+    --bg:#0f0f1a; --card:#1a1a2e; --card2:#16213e;
+    --primary:#5c3df4; --accent:#a78bfa; --text:#e2e8f0; --muted:#94a3b8;
+    --border:#2d2d44; --input-bg:#1e1e38;
+    --success:#16a34a; --error:#dc2626; --warn:#d97706;
+  }
+  body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:16px;}
+
+  .header{background:var(--card);border-radius:16px;padding:20px;margin-bottom:16px;border:1px solid var(--border);text-align:center;}
+  .header h1{font-size:1.2rem;font-weight:800;color:var(--accent);}
+  .header p{font-size:0.8rem;color:var(--muted);margin-top:4px;}
+
+  .search-box{background:var(--card);border-radius:16px;padding:16px;margin-bottom:16px;border:1px solid var(--border);}
+  .search-box input{width:100%;height:50px;background:var(--input-bg);border:2px solid var(--border);border-radius:12px;padding:0 14px;font-family:inherit;font-size:0.95rem;color:var(--text);outline:none;margin-bottom:10px;}
+  .search-box input:focus{border-color:var(--primary);}
+  .search-box button{width:100%;height:48px;background:var(--primary);color:#fff;font-family:inherit;font-size:0.9rem;font-weight:700;border:none;border-radius:12px;cursor:pointer;}
+  .search-box button:disabled{opacity:0.5;}
+
+  .user-info{background:var(--card);border-radius:16px;padding:16px;margin-bottom:16px;border:1px solid var(--border);display:none;}
+  .user-info.show{display:block;}
+  .user-info .email{font-size:0.9rem;font-weight:700;color:var(--accent);margin-bottom:12px;}
+  .user-info .uid{font-size:0.7rem;color:var(--muted);margin-bottom:10px;word-break:break-all;}
+
+  .invest-card{background:var(--card2);border-radius:12px;padding:14px;margin-bottom:10px;border:1px solid var(--border);}
+  .invest-card .top{display:flex;justify-content:space-between;font-weight:700;margin-bottom:6px;font-size:0.85rem;}
+  .invest-card .id{font-size:0.72rem;color:var(--muted);}
+  .invest-card .id span{color:var(--text);font-weight:600;}
+  .invest-card .delete-btn{width:100%;height:38px;background:var(--error);color:#fff;border:none;border-radius:8px;font-family:inherit;font-size:0.78rem;font-weight:700;cursor:pointer;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:6px;}
+  .invest-card .delete-btn:hover{background:#b91c1c;}
+  .invest-card .delete-btn:disabled{opacity:0.5;cursor:not-allowed;}
+
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(6px);z-index:100;align-items:center;justify-content:center;padding:20px;}
+  .modal-overlay.show{display:flex;}
+  .modal{background:var(--card);border-radius:22px;padding:28px 22px;max-width:380px;width:100%;text-align:center;animation:pop .3s ease;}
+  @keyframes pop{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
+  .modal .icon{font-size:3rem;margin-bottom:12px;}
+  .modal h3{font-size:1.1rem;font-weight:800;margin-bottom:8px;}
+  .modal p{font-size:0.88rem;color:var(--muted);line-height:1.6;margin-bottom:18px;}
+  .modal .btns{display:flex;gap:10px;}
+  .modal .btns button{flex:1;padding:13px;border:none;border-radius:12px;font-family:inherit;font-size:0.9rem;font-weight:700;cursor:pointer;}
+  .modal .btn-cancel{background:var(--input-bg);color:var(--muted);border:1px solid var(--border);}
+  .modal .btn-confirm{background:var(--error);color:#fff;}
+
+  .spinner{width:20px;height:20px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;display:none;margin:0 auto;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .loading{text-align:center;padding:16px;display:none;}
+  .loading.show{display:block;}
+  .loading .spinner{display:block;margin-bottom:8px;}
+  .loading p{font-size:0.8rem;color:var(--muted);}
+
+  .msg-box{background:var(--card);border-radius:12px;padding:14px;margin-top:12px;text-align:center;font-weight:700;font-size:0.85rem;display:none;}
+  .msg-box.show{display:block;}
+  .msg-box.ok{background:#064e3b;color:#6ee7b7;border:1px solid #065f46;}
+  .msg-box.err{background:#7f1d1d;color:#fca5a5;border:1px solid #991b1b;}
+
+  .no-invest{padding:20px;text-align:center;color:var(--muted);font-size:0.85rem;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🗑️ Admin: Delete User Investment</h1>
+  <p>Search user → See plans → Delete specific investment</p>
+</div>
+
+<div class="search-box">
+  <input type="text" id="searchInput" placeholder="Enter user email...">
+  <button id="searchBtn" onclick="searchUser()">🔍 Search User</button>
+</div>
+
+<div class="loading" id="loadingBox"><div class="spinner"></div><p id="loadingText">Searching...</p></div>
+
+<div class="user-info" id="userInfo">
+  <div class="email" id="userEmailDisplay">—</div>
+  <div class="uid">UID: <span id="userUid">—</span></div>
+  <div id="investList"></div>
+  <div class="msg-box" id="msgBox"></div>
+</div>
+
+<!-- CONFIRMATION MODAL -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal">
+    <div class="icon">⚠️</div>
+    <h3>Delete This Investment?</h3>
+    <p id="confirmMsg">This action cannot be undone. The investment will be permanently removed from the user's account.</p>
+    <div class="btns">
+      <button class="btn-cancel" onclick="closeConfirmModal()">Cancel</button>
+      <button class="btn-confirm" id="confirmDeleteBtn" onclick="executeDelete()">🗑️ Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- SUCCESS MODAL -->
+<div class="modal-overlay" id="successModal">
+  <div class="modal">
+    <div class="icon">✅</div>
+    <h3>Investment Deleted!</h3>
+    <p id="successMsg">The investment has been successfully deleted from the user's account.</p>
+    <div class="btns">
+      <button class="btn-confirm" style="background:var(--success);" onclick="closeSuccessModal()">OK</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, doc, getDoc, deleteDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const fc = { apiKey:"AIzaSyA4nRl80lwklik6A8RTvE0Py-jNEg8PJ58", authDomain:"nexa-a8cad.firebaseapp.com", projectId:"nexa-a8cad", storageBucket:"nexa-a8cad.firebasestorage.app", messagingSenderId:"324559998149", appId:"1:324559998149:web:e23ddfa3f0c71114eab4ac" };
+  const app = initializeApp(fc);
+  const db = getFirestore(app);
+
+  let foundUid = null;
+  let investmentsList = [];
+  let deleteTargetId = null;
+  let deleteTargetName = '';
+
+  const ff = n => Math.round(Number(n)||0).toLocaleString();
+  const fu = n => (Number(n)||0).toFixed(2);
+
+  function setLoading(show, text) {
+    document.getElementById('loadingBox').classList.toggle('show', show);
+    document.getElementById('loadingText').textContent = text || 'Processing...';
+    document.getElementById('searchBtn').disabled = show;
+  }
+
+  function showMsg(msg, type) {
+    const box = document.getElementById('msgBox');
+    box.textContent = msg;
+    box.className = 'msg-box show ' + (type || 'ok');
+    setTimeout(() => box.classList.remove('show'), 5000);
+  }
+
+  // ════════ SEARCH USER ════════
+  window.searchUser = async () => {
+    const email = document.getElementById('searchInput').value.trim().toLowerCase();
+    if (!email) { showMsg('Enter an email address', 'err'); return; }
+
+    setLoading(true, 'Searching for user...');
+    document.getElementById('userInfo').classList.remove('show');
+    investmentsList = [];
+
+    try {
+      const q = query(collection(db, 'users'), where('email', '==', email));
+      const snap = await getDocs(q);
+
+      if (snap.empty) {
+        setLoading(false);
+        showMsg('User not found with email: ' + email, 'err');
+        return;
+      }
+
+      const userDoc = snap.docs[0];
+      foundUid = userDoc.id;
+      
+      document.getElementById('userEmailDisplay').textContent = userDoc.data().email || email;
+      document.getElementById('userUid').textContent = foundUid;
+      document.getElementById('userInfo').classList.add('show');
+
+      // Load investments
+      await loadInvestments(foundUid);
+      
+    } catch (e) {
+      setLoading(false);
+      showMsg('Error: ' + e.message, 'err');
+    }
+  };
+
+  // ════════ LOAD INVESTMENTS ════════
+  async function loadInvestments(uid) {
+    const list = document.getElementById('investList');
+    investmentsList = [];
+    
+    try {
+      const snap = await getDocs(query(collection(db, 'investments'), where('userId', '==', uid)));
+      
+      if (snap.empty) {
+        list.innerHTML = '<div class="no-invest">No investments found for this user.</div>';
+        setLoading(false);
+        return;
+      }
+
+      let html = '';
+      snap.forEach(dc => {
+        const inv = dc.data();
+        investmentsList.push({
+          id: dc.id,
+          planName: inv.planName || 'Plan',
+          amount: inv.amount || 0,
+          daysPaid: inv.daysPaid || 0,
+          totalDays: inv.days || 20,
+          status: inv.status || '?',
+          locked: inv.locked || false
+        });
+
+        const statusColor = inv.status === 'completed' ? 'var(--success)' : inv.status === 'active' ? 'var(--accent)' : 'var(--muted)';
+        const lockedTag = inv.locked ? ' 🔒' : '';
+
+        html += `<div class="invest-card">
+          <div class="top">
+            <span>${inv.planName || 'Plan'}${lockedTag}</span>
+            <span style="color:${statusColor};font-size:0.7rem;">${inv.status}</span>
+          </div>
+          <div class="id">Amount: <span>$${fu(inv.amount)}</span> | Days: <span>${inv.daysPaid||0}/${inv.days||20}</span></div>
+          <div class="id">ID: <span style="font-size:0.6rem;word-break:break-all;">${dc.id}</span></div>
+          <button class="delete-btn" onclick="confirmDelete('${dc.id}', '${inv.planName || 'Plan'}')">
+            🗑️ Delete This Investment
+          </button>
+        </div>`;
+      });
+
+      list.innerHTML = html;
+      
+    } catch (e) {
+      list.innerHTML = '<div class="no-invest">Error loading investments.</div>';
+      showMsg('Error: ' + e.message, 'err');
+    }
+    setLoading(false);
+  }
+
+  // ════════ CONFIRM DELETE ════════
+  window.confirmDelete = (invId, planName) => {
+    deleteTargetId = invId;
+    deleteTargetName = planName;
+    document.getElementById('confirmMsg').textContent = `Delete "${planName}" investment from this user's account?\n\nThis action cannot be undone. The user will see this plan disappear from their "My Investments" tab.`;
+    document.getElementById('confirmModal').classList.add('show');
+  };
+
+  window.closeConfirmModal = () => {
+    document.getElementById('confirmModal').classList.remove('show');
+    deleteTargetId = null;
+    deleteTargetName = '';
+  };
+
+  // ════════ EXECUTE DELETE ════════
+  window.executeDelete = async () => {
+    if (!deleteTargetId) return;
+    
+    const btn = document.getElementById('confirmDeleteBtn');
+    btn.disabled = true;
+    btn.textContent = 'Deleting...';
+    
+    try {
+      // ✅ Delete from investments collection
+      await deleteDoc(doc(db, 'investments', deleteTargetId));
+      console.log('✅ Investment deleted:', deleteTargetId);
+      
+      // Close confirm modal
+      document.getElementById('confirmModal').classList.remove('show');
+      btn.disabled = false;
+      btn.textContent = '🗑️ Delete';
+      
+      // Show success modal
+      document.getElementById('successMsg').textContent = `"${deleteTargetName}" has been successfully deleted.\n\nThe user will no longer see this plan in their "My Investments" tab.`;
+      document.getElementById('successModal').classList.add('show');
+      
+      // Refresh investment list
+      if (foundUid) {
+        setLoading(true, 'Refreshing investments...');
+        await loadInvestments(foundUid);
+      }
+      
+    } catch (e) {
+      console.error('Delete error:', e);
+      document.getElementById('confirmModal').classList.remove('show');
+      btn.disabled = false;
+      btn.textContent = '🗑️ Delete';
+      showMsg('Error deleting: ' + e.message, 'err');
+    }
+  };
+
+  window.closeSuccessModal = () => {
+    document.getElementById('successModal').classList.remove('show');
+  };
+</script>
+</body>
+</html>
