@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<title>Nexa – Admin: User Management</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  :root{
+    --bg:#0f0f1a; --card:#1a1a2e; --card2:#16213e;
+    --primary:#5c3df4; --accent:#a78bfa; --text:#e2e8f0; --muted:#94a3b8;
+    --border:#2d2d44; --input-bg:#1e1e38;
+    --success:#16a34a; --error:#dc2626; --warn:#d97706;
+  }
+  body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:16px;}
+
+  .header{background:var(--card);border-radius:16px;padding:20px;margin-bottom:16px;border:1px solid var(--border);text-align:center;}
+  .header h1{font-size:1.2rem;font-weight:800;color:var(--accent);}
+  .header p{font-size:0.8rem;color:var(--muted);margin-top:4px;}
+
+  .search-box{background:var(--card);border-radius:16px;padding:16px;margin-bottom:16px;border:1px solid var(--border);}
+  .search-box input{width:100%;height:50px;background:var(--input-bg);border:2px solid var(--border);border-radius:12px;padding:0 14px;font-family:inherit;font-size:0.95rem;color:var(--text);outline:none;margin-bottom:10px;}
+  .search-box input:focus{border-color:var(--primary);}
+  .search-box button{width:100%;height:48px;background:var(--primary);color:#fff;font-family:inherit;font-size:0.9rem;font-weight:700;border:none;border-radius:12px;cursor:pointer;}
+
+  .user-section{display:none;}
+  .user-section.show{display:block;}
+
+  .user-card{background:var(--card);border-radius:16px;padding:16px;margin-bottom:12px;border:1px solid var(--border);}
+  .user-card .email{font-size:0.95rem;font-weight:800;color:var(--accent);margin-bottom:4px;}
+  .user-card .uid{font-size:0.65rem;color:var(--muted);word-break:break-all;margin-bottom:10px;}
+  .user-card .status-pill{display:inline-block;font-size:0.65rem;font-weight:700;padding:3px 10px;border-radius:50px;margin-bottom:10px;}
+  .user-card .status-pill.active{background:#dcfce7;color:#15803d;}
+  .user-card .status-pill.suspended{background:#fee2e2;color:#b91c1c;}
+
+  .wallet-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+  .wallet-item{background:var(--card2);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--border);}
+  .wallet-item .wl{font-size:0.6rem;color:var(--muted);text-transform:uppercase;margin-bottom:3px;}
+  .wallet-item .wa{font-size:1rem;font-weight:800;color:var(--accent);}
+
+  .btn-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+  .btn{height:42px;border:none;border-radius:10px;font-family:inherit;font-size:0.75rem;font-weight:700;cursor:pointer;color:#fff;}
+  .btn.suspend{background:var(--warn);}
+  .btn.unsuspend{background:var(--success);}
+  .btn.deduct-dep{background:var(--primary);}
+  .btn.deduct-wd{background:var(--error);}
+  .btn.lock-plan{background:var(--warn);}
+  .btn.unlock-plan{background:var(--success);}
+
+  .section-title{font-size:0.85rem;font-weight:700;color:var(--accent);margin:14px 0 8px;}
+
+  .invest-card{background:var(--card2);border-radius:12px;padding:14px;margin-bottom:8px;border:1px solid var(--border);}
+  .invest-card .ih{display:flex;justify-content:space-between;font-weight:700;font-size:0.82rem;margin-bottom:6px;}
+  .invest-card .id{font-size:0.72rem;color:var(--muted);margin-bottom:3px;}
+  .invest-card .id span{color:var(--text);font-weight:600;}
+  .invest-card .status-tag{font-size:0.65rem;font-weight:700;padding:2px 8px;border-radius:50px;}
+  .invest-card .status-tag.active{background:#dcfce7;color:#15803d;}
+  .invest-card .status-tag.locked{background:#fef3c7;color:#92400e;}
+  .invest-card .status-tag.completed{background:#ccfbf1;color:#0f766e;}
+  .invest-card .btn-small{width:100%;height:32px;border:none;border-radius:8px;font-family:inherit;font-size:0.7rem;font-weight:700;cursor:pointer;color:#fff;margin-top:6px;}
+
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:100;align-items:center;justify-content:center;padding:20px;}
+  .modal-overlay.show{display:flex;}
+  .modal{background:var(--card);border-radius:20px;padding:24px 20px;max-width:360px;width:100%;text-align:center;animation:pop .3s ease;}
+  @keyframes pop{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
+  .modal h3{font-size:1.05rem;font-weight:800;margin-bottom:8px;}
+  .modal p{font-size:0.85rem;color:var(--muted);line-height:1.5;margin-bottom:14px;}
+  .modal input{width:100%;height:46px;background:var(--input-bg);border:2px solid var(--border);border-radius:10px;padding:0 12px;font-family:inherit;font-size:0.9rem;color:var(--text);outline:none;margin-bottom:12px;text-align:center;}
+  .modal input:focus{border-color:var(--primary);}
+  .modal .btns{display:flex;gap:10px;}
+  .modal .btns button{flex:1;padding:12px;border:none;border-radius:10px;font-family:inherit;font-size:0.85rem;font-weight:700;cursor:pointer;}
+  .modal .btn-cancel{background:var(--input-bg);color:var(--muted);border:1px solid var(--border);}
+  .modal .btn-confirm{background:var(--error);color:#fff;}
+  .modal .btn-confirm.green{background:var(--success);}
+
+  .msg-box{background:var(--card);border-radius:12px;padding:14px;margin-top:12px;text-align:center;font-weight:700;font-size:0.82rem;display:none;}
+  .msg-box.show{display:block;}
+  .msg-box.ok{background:#064e3b;color:#6ee7b7;border:1px solid #065f46;}
+  .msg-box.err{background:#7f1d1d;color:#fca5a5;border:1px solid #991b1b;}
+
+  .loading{text-align:center;padding:16px;display:none;}
+  .loading.show{display:block;}
+  .spinner{width:22px;height:22px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .6s linear infinite;margin:0 auto 8px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .loading p{font-size:0.8rem;color:var(--muted);}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🛡️ Admin: User Management</h1>
+  <p>Search · View Plans · Edit Wallets · Suspend · Lock Plans</p>
+</div>
+
+<div class="search-box">
+  <input type="text" id="searchInput" placeholder="Enter user email...">
+  <button onclick="searchUser()">🔍 Search User</button>
+</div>
+
+<div class="loading" id="loadingBox"><div class="spinner"></div><p>Searching...</p></div>
+
+<div class="user-section" id="userSection">
+  <div class="user-card">
+    <div class="email" id="uEmail">—</div>
+    <div class="uid" id="uUid">—</div>
+    <div id="uStatusPill"></div>
+    
+    <div class="wallet-grid">
+      <div class="wallet-item"><div class="wl">💰 Deposit</div><div class="wa">$<span id="uDepW">0.00</span></div></div>
+      <div class="wallet-item"><div class="wl">💸 Withdrawal</div><div class="wa">$<span id="uWdW">0.00</span></div></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn deduct-dep" id="btnDeductDep" onclick="showDeductModal('deposit')">💸 Deduct Deposit</button>
+      <button class="btn deduct-wd" id="btnDeductWd" onclick="showDeductModal('withdrawal')">💸 Deduct Withdrawal</button>
+    </div>
+    <div class="btn-row">
+      <button class="btn suspend" id="btnSuspend" onclick="toggleSuspend()">🔒 Suspend User</button>
+      <button class="btn unsuspend" id="btnUnsuspend" onclick="toggleSuspend()" style="display:none;">✅ Unsuspend User</button>
+    </div>
+  </div>
+
+  <p class="section-title">📊 User Investments</p>
+  <div id="investList"></div>
+
+  <div class="msg-box" id="msgBox"></div>
+</div>
+
+<!-- DEDUCT MODAL -->
+<div class="modal-overlay" id="deductModal">
+  <div class="modal">
+    <h3 id="deductTitle">Deduct From Deposit Wallet</h3>
+    <p id="deductMsg">Enter amount to deduct</p>
+    <input type="number" id="deductAmt" placeholder="0.00" min="0.01" step="0.01">
+    <div class="btns">
+      <button class="btn-cancel" onclick="closeDeductModal()">Cancel</button>
+      <button class="btn-confirm" onclick="executeDeduct()">Confirm Deduction</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal">
+    <h3 id="confirmTitle">Confirm Action</h3>
+    <p id="confirmMsg">Are you sure?</p>
+    <div class="btns">
+      <button class="btn-cancel" onclick="closeConfirmModal()">Cancel</button>
+      <button class="btn-confirm green" id="confirmBtn" onclick="executeConfirm()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const fc = { apiKey:"AIzaSyA4nRl80lwklik6A8RTvE0Py-jNEg8PJ58", authDomain:"nexa-a8cad.firebaseapp.com", projectId:"nexa-a8cad", storageBucket:"nexa-a8cad.firebasestorage.app", messagingSenderId:"324559998149", appId:"1:324559998149:web:e23ddfa3f0c71114eab4ac" };
+  const app = initializeApp(fc);
+  const db = getFirestore(app);
+
+  let foundUid = null;
+  let foundData = null;
+  let investmentsList = [];
+  let deductType = null;
+  let pendingAction = null;
+  let pendingActionData = null;
+
+  const fu = n => (Number(n)||0).toFixed(2);
+  const ff = n => Math.round(Number(n)||0).toLocaleString();
+
+  function showMsg(msg, type) {
+    const box = document.getElementById('msgBox');
+    box.textContent = msg;
+    box.className = 'msg-box show ' + (type || 'ok');
+    setTimeout(() => box.classList.remove('show'), 5000);
+  }
+
+  function setLoading(show) {
+    document.getElementById('loadingBox').classList.toggle('show', show);
+  }
+
+  // ════════ SEARCH USER ════════
+  window.searchUser = async () => {
+    const email = document.getElementById('searchInput').value.trim().toLowerCase();
+    if (!email) { showMsg('Enter an email', 'err'); return; }
+
+    setLoading(true);
+    document.getElementById('userSection').classList.remove('show');
+
+    try {
+      const q = query(collection(db, 'users'), where('email', '==', email));
+      const snap = await getDocs(q);
+
+      if (snap.empty) {
+        setLoading(false);
+        showMsg('User not found', 'err');
+        return;
+      }
+
+      const uDoc = snap.docs[0];
+      foundUid = uDoc.id;
+      foundData = uDoc.data();
+
+      document.getElementById('uEmail').textContent = foundData.email || email;
+      document.getElementById('uUid').textContent = 'UID: ' + foundUid;
+      
+      // Status pill
+      const suspended = foundData.suspended === true;
+      document.getElementById('uStatusPill').innerHTML = suspended 
+        ? '<span class="status-pill suspended">🔴 SUSPENDED</span>'
+        : '<span class="status-pill active">🟢 ACTIVE</span>';
+      
+      document.getElementById('btnSuspend').style.display = suspended ? 'none' : 'block';
+      document.getElementById('btnUnsuspend').style.display = suspended ? 'block' : 'none';
+
+      // Wallets
+      document.getElementById('uDepW').textContent = fu(foundData.depositWallet);
+      document.getElementById('uWdW').textContent = fu(foundData.withdrawalWallet);
+
+      // Load investments
+      await loadInvestments(foundUid);
+
+      document.getElementById('userSection').classList.add('show');
+      
+    } catch (e) {
+      showMsg('Error: ' + e.message, 'err');
+    }
+    setLoading(false);
+  };
+
+  // ════════ LOAD INVESTMENTS ════════
+  async function loadInvestments(uid) {
+    const list = document.getElementById('investList');
+    investmentsList = [];
+
+    const snap = await getDocs(query(collection(db, 'investments'), where('userId', '==', uid)));
+    
+    if (snap.empty) {
+      list.innerHTML = '<p style="color:var(--muted);text-align:center;padding:10px;">No investments found.</p>';
+      return;
+    }
+
+    let html = '';
+    snap.forEach(dc => {
+      const inv = dc.data();
+      investmentsList.push({ id: dc.id, ...inv });
+
+      const purchaseDate = inv.createdAt?.toMillis 
+        ? new Date(inv.createdAt.toMillis()).toLocaleDateString('en-US', { day:'numeric', month:'short', year:'numeric' })
+        : 'Unknown';
+      
+      const isLocked = inv.locked === true;
+      const isCompleted = inv.status === 'completed' || (inv.daysPaid || 0) >= (inv.days || 20);
+      const statusClass = isCompleted ? 'completed' : isLocked ? 'locked' : 'active';
+      const statusText = isCompleted ? '✅ Completed' : isLocked ? '🔒 Locked' : '▶ Active';
+
+      html += `<div class="invest-card">
+        <div class="ih">
+          <span>${inv.planName || 'Plan'}</span>
+          <span class="status-tag ${statusClass}">${statusText}</span>
+        </div>
+        <div class="id">ID: <span>${dc.id.substring(0, 12)}...</span></div>
+        <div class="id">Purchased: <span>${purchaseDate}</span></div>
+        <div class="id">Amount: <span>$${fu(inv.amount)}</span> | Daily: <span>$${fu(inv.daily)}</span></div>
+        <div class="id">Days: <span>${inv.daysPaid || 0}/${inv.days || 20}</span> | Earned: <span>$${fu(inv.totalPaidOut)}</span></div>
+        ${isLocked 
+          ? `<button class="btn-small" style="background:var(--success);" onclick="togglePlanLock('${dc.id}', false)">✅ Unlock Plan</button>`
+          : isCompleted 
+            ? ''
+            : `<button class="btn-small" style="background:var(--warn);" onclick="togglePlanLock('${dc.id}', true)">🔒 Lock Plan</button>`
+        }
+      </div>`;
+    });
+
+    list.innerHTML = html;
+  }
+
+  // ════════ SUSPEND/UNSUSPEND ════════
+  window.toggleSuspend = () => {
+    const currentlySuspended = foundData.suspended === true;
+    pendingAction = 'suspend';
+    pendingActionData = !currentlySuspended;
+    
+    document.getElementById('confirmTitle').textContent = currentlySuspended ? 'Unsuspend User?' : 'Suspend User?';
+    document.getElementById('confirmMsg').textContent = currentlySuspended 
+      ? 'This will restore the user\'s access to their account.'
+      : 'This will block the user from logging in. They will see a message that their account is suspended.';
+    document.getElementById('confirmModal').classList.add('show');
+  };
+
+  // ════════ DEDUCT WALLET ════════
+  window.showDeductModal = (type) => {
+    deductType = type;
+    const title = type === 'deposit' ? 'Deduct From Deposit Wallet' : 'Deduct From Withdrawal Wallet';
+    const currentBal = type === 'deposit' ? foundData.depositWallet : foundData.withdrawalWallet;
+    
+    document.getElementById('deductTitle').textContent = title;
+    document.getElementById('deductMsg').textContent = `Current balance: $${fu(currentBal)}. Enter amount to deduct.`;
+    document.getElementById('deductAmt').value = '';
+    document.getElementById('deductModal').classList.add('show');
+  };
+
+  window.closeDeductModal = () => {
+    document.getElementById('deductModal').classList.remove('show');
+    deductType = null;
+  };
+
+  window.executeDeduct = async () => {
+    const amt = parseFloat(document.getElementById('deductAmt').value) || 0;
+    if (amt <= 0) { showMsg('Enter a valid amount', 'err'); return; }
+    
+    const field = deductType === 'deposit' ? 'depositWallet' : 'withdrawalWallet';
+    const currentBal = Number(foundData[field]) || 0;
+    
+    if (amt > currentBal) {
+      showMsg(`Insufficient balance. Current: $${fu(currentBal)}`, 'err');
+      return;
+    }
+
+    document.getElementById('deductModal').classList.remove('show');
+    setLoading(true);
+
+    try {
+      const updates = {};
+      updates[field] = currentBal - amt;
+      updates.walletBalance = (Number(foundData.depositWallet)||0) + (Number(foundData.withdrawalWallet)||0) - amt;
+      
+      await updateDoc(doc(db, 'users', foundUid), updates);
+      
+      // Update local data
+      foundData[field] = currentBal - amt;
+      document.getElementById('uDepW').textContent = fu(foundData.depositWallet);
+      document.getElementById('uWdW').textContent = fu(foundData.withdrawalWallet);
+      
+      showMsg(`✅ $${fu(amt)} deducted from ${deductType} wallet!`, 'ok');
+    } catch (e) {
+      showMsg('Error: ' + e.message, 'err');
+    }
+    setLoading(false);
+    deductType = null;
+  };
+
+  // ════════ LOCK/UNLOCK PLAN ════════
+  window.togglePlanLock = (planId, shouldLock) => {
+    pendingAction = 'lockPlan';
+    pendingActionData = { planId, shouldLock };
+    
+    document.getElementById('confirmTitle').textContent = shouldLock ? 'Lock This Plan?' : 'Unlock This Plan?';
+    document.getElementById('confirmMsg').textContent = shouldLock 
+      ? 'The plan\'s countdown will freeze and ROI will stop.'
+      : 'The plan will resume counting and ROI will continue.';
+    document.getElementById('confirmModal').classList.add('show');
+  };
+
+  window.closeConfirmModal = () => {
+    document.getElementById('confirmModal').classList.remove('show');
+    pendingAction = null;
+    pendingActionData = null;
+  };
+
+  window.executeConfirm = async () => {
+    document.getElementById('confirmModal').classList.remove('show');
+    setLoading(true);
+
+    try {
+      if (pendingAction === 'suspend') {
+        await updateDoc(doc(db, 'users', foundUid), { suspended: pendingActionData });
+        foundData.suspended = pendingActionData;
+        showMsg(pendingActionData ? '✅ User suspended!' : '✅ User unsuspended!', 'ok');
+        
+        document.getElementById('uStatusPill').innerHTML = pendingActionData
+          ? '<span class="status-pill suspended">🔴 SUSPENDED</span>'
+          : '<span class="status-pill active">🟢 ACTIVE</span>';
+        document.getElementById('btnSuspend').style.display = pendingActionData ? 'none' : 'block';
+        document.getElementById('btnUnsuspend').style.display = pendingActionData ? 'block' : 'none';
+        
+      } else if (pendingAction === 'lockPlan') {
+        const { planId, shouldLock } = pendingActionData;
+        await updateDoc(doc(db, 'investments', planId), { locked: shouldLock });
+        showMsg(shouldLock ? '✅ Plan locked!' : '✅ Plan unlocked!', 'ok');
+        await loadInvestments(foundUid);
+      }
+      
+    } catch (e) {
+      showMsg('Error: ' + e.message, 'err');
+    }
+    
+    setLoading(false);
+    pendingAction = null;
+    pendingActionData = null;
+  };
+</script>
+</body>
+</html>
